@@ -2,4 +2,3 @@
 .envrc
 __pycache__
 poetry.lock
-dist/**
