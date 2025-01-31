@@ -1,0 +1,4 @@
+a:
+  b: ${ENV_B:default_used_b}
+  c: ${ENV_C:default_used_c}
+  d: ${ENV_D:null}
