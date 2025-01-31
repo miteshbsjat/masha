@@ -1,3 +1,0 @@
-name: mitesh
-version: 0.0.1
-debug: ${MASHA_DEBUG:false}
