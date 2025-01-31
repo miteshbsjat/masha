@@ -1,0 +1,4 @@
+.attic
+.envrc
+__pycache__
+poetry.lock

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "masha"
+version = "0.0.0"
+description = "MASHup of Configuration Loading from several file types and run yAsha like Jinja2 template rendition with Validation"
+authors = ["Mitesh Jat <mitesh.jat@josys.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pyyaml = "6.0.2"
+toml = "0.10.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
