@@ -65,6 +65,8 @@ def main():
         "a": "val_a",
         "b": "from_{{ a | uppercase }}"
     }
+    input = {'name': 'test', 'version': '0.0.2', 'debug': 'false', 'age': 14}
+    logger.debug(f"imput = {input}")
     filters_path = Path(__file__).parent / "filters"
     logger.debug(f"filters_path = {filters_path}")
     rendered = render_templates_with_filters(input, str(filters_path))
