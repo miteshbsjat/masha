@@ -1,0 +1,5 @@
+{
+	"c": "from {{ b }}",
+	"a": "val_a",
+	"b": "from_{{ a | uppercase }}"
+}
