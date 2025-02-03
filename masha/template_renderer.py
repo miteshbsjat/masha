@@ -8,24 +8,28 @@ from pathlib import Path
 from logger_factory import create_logger
 logger = create_logger("masha")
 
+def load_functions_from_file(file: str):
+    """Loads all Python functions from a given file."""
+    functions = {}
+    if os.path.exists(file) and file.endswith(".py"):
+        module_name = file[:-3]  # Remove '.py' extension
+        spec = importlib.util.spec_from_file_location(module_name, file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if callable(attr) and not attr_name.startswith("_"):  # Only include functions
+                functions[attr_name] = attr
+    return functions
+
 def load_filters_from_directory(directory: str):
     """Loads all Python functions from files in the given directory as Jinja2 filters."""
     filters = {}
     if os.path.exists(directory):
         for filename in os.listdir(directory):
-            if filename.endswith(".py"):
-                module_name = filename[:-3]  # Remove '.py' extension
-                file_path = os.path.join(directory, filename)
-
-                spec = importlib.util.spec_from_file_location(module_name, file_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if callable(attr) and not attr_name.startswith("_"):  # Only include functions
-                        filters[attr_name] = attr
-
+            file_path = os.path.join(directory, filename)
+            filters.update(load_functions_from_file(file_path))
     return filters
 
 def render_templates_with_filters(input_dict: dict, filters_directory: str, max_iterations=10):
