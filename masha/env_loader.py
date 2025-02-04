@@ -3,7 +3,6 @@
 import re
 import os
 import json
-import logging
 from pathlib import Path
 import config_loader
 
@@ -23,7 +22,6 @@ def load_env_vars(config: dict) -> dict:
 
 
 import re
-from functools import lru_cache
 
 
 def resolve_env_variables(config):

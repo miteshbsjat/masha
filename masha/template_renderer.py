@@ -4,7 +4,6 @@ import os
 import importlib.util
 import jinja2
 from pathlib import Path
-import logging
 
 from logger_factory import create_logger
 
