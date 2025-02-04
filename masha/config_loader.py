@@ -26,6 +26,7 @@ import configparser
 import argparse
 from pathlib import Path
 from typing import Any, Dict
+from returns.result import Result, Success, Failure
 
 from logger_factory import create_logger
 import toml
@@ -35,34 +36,60 @@ logger = create_logger("masha")
 
 
 # Function to load configuration files
-def load_config(file_path: Path) -> dict:
+def load_config(file_path: Path) -> Result[{}, dict]:
     """
-    Load configuration file into a dictionary.
+    Load a configuration file into a dictionary.
 
     Parameters:
-    - file_path (Path): The path to the configuration file.
+    - file_path (Path): The path to the configuration file. Supported file types include:
+        - .yaml, .yml
+        - .json
+        - .toml
+        - .properties
 
     Returns:
-    - dict: A dictionary containing the configuration data.
+    - dict: A dictionary containing the configuration data if successful.
+    - Failure: An object containing an error message if the file type is not supported.
 
     Raises:
-    - ValueError: If the file type is not supported.
+    - ValueError: If the file type is not supported or if there's an issue reading the file.
+
+    Examples:
+    >>> config = load_config(Path("config.yaml"))
+    >>> print(config)
+    {'key': 'value'}
+
+    >>> config = load_config(Path("config.json"))
+    >>> print(config)
+    {'key': 'value'}
+
+    >>> config = load_config(Path("config.toml"))
+    >>> print(config)
+    {'key': 'value'}
+
+    >>> config = load_config(Path("config.properties"))
+    >>> print(config)
+    {'section': {'key': 'value'}}
+
+    >>> config = load_config(Path("config.xml"))
+    >>> print(config)
+    Failure({'error': 'Unsupported file type: .xml'})
     """
     if file_path.suffix in {".yaml", ".yml"}:
         with open(file_path, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
+            return Success(yaml.safe_load(f))
     elif file_path.suffix == ".json":
         with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            return Success(json.load(f))
     elif file_path.suffix == ".toml":
         with open(file_path, "r", encoding="utf-8") as f:
-            return toml.load(f)
+            return Success(toml.load(f))
     elif file_path.suffix == ".properties":
         config = configparser.ConfigParser()
         config.read(file_path)
-        return {section: dict(config[section]) for section in config.sections()}
+        return Success({section: dict(config[section]) for section in config.sections()})
     else:
-        raise ValueError(f"Unsupported file type: {file_path.suffix}")
+        return Failure({"error": f"Unsupported file type: {file_path.suffix}"})
 
 
 # Function to merge multiple dictionaries
@@ -87,27 +114,38 @@ def merge_configs(configs: Dict[str, Any]) -> dict:
     return merged_config
 
 
-def load_and_merge_configs(config_paths: list[Path]):
+def load_and_merge_configs(config_paths: list[Path]) -> Result[{}, dict]:
     """
     Load and merge multiple configuration files.
+
+    This function takes a list of file paths to configuration files, loads each one,
+    and merges them into a single dictionary. If any file fails to load or merge,
+    the function returns an error message.
 
     Args:
         config_paths (list[Path]): A list of file paths to the configuration files.
 
     Returns:
-        dict or None: The merged configuration dictionary if successful, otherwise None.
+        Result[dict, str]: A `Success` containing the merged configuration dictionary 
+                            if all files are processed successfully.
+                           Otherwise, a `Failure` containing an error message indicating 
+                            which file caused the issue.
+
+    Raises:
+        ValueError: If any of the provided file paths are not valid or do not exist.
     """
     configs = []
     for config_path in config_paths:
-        try:
-            logger.debug(f"Loading file: {config_path}")
-            config_data = load_config(config_path)
-            configs.append(config_data)
-        except Exception as e:
-            logger.warning(f"Error processing file {config_path}: {e}")
-            return None
+        logger.debug(f"Loading file: {config_path}")
+        match load_config(config_path):
+            case Success(config_data):
+                configs.append(config_data)
+            case Failure(value):
+                msg = f"Error processing file {config_path}: {config_data}"
+                logger.warning(f"Error processing file {config_path}: {value}")
+                return Failure({"error": msg})
     merged_config = merge_configs(configs)
-    return merged_config
+    return Success(merged_config)
 
 
 # CLI entry point
@@ -138,9 +176,13 @@ def main():
     #     return
 
     # Load and merge all configuration files
-    merged_config = load_and_merge_configs(args.variables)
-    if not merged_config:
-        return
+    merged_config = None
+    match load_and_merge_configs(args.variables):
+        case Success(value):
+            merged_config = value
+        case Failure(value):
+            logger.warning(f"Failed to load config: {value}")
+            return
 
     print(json.dumps(merged_config))
 
