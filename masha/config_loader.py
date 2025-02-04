@@ -39,42 +39,14 @@ logger = create_logger("masha")
 # Function to load configuration files
 def load_config(file_path: Path) -> Result[{}, dict]:
     """
-    Load a configuration file into a dictionary.
+    Load configuration from a file based on its extension.
 
-    Parameters:
-    - file_path (Path): The path to the configuration file. Supported file types include:
-        - .yaml, .yml
-        - .json
-        - .toml
-        - .properties
+    Args:
+        file_path (Path): The path to the configuration file.
 
     Returns:
-    - dict: A dictionary containing the configuration data if successful.
-    - Failure: An object containing an error message if the file type is not supported.
-
-    Raises:
-    - ValueError: If the file type is not supported or if there's an issue reading the file.
-
-    Examples:
-    >>> config = load_config(Path("config.yaml"))
-    >>> print(config)
-    {'key': 'value'}
-
-    >>> config = load_config(Path("config.json"))
-    >>> print(config)
-    {'key': 'value'}
-
-    >>> config = load_config(Path("config.toml"))
-    >>> print(config)
-    {'key': 'value'}
-
-    >>> config = load_config(Path("config.properties"))
-    >>> print(config)
-    {'section': {'key': 'value'}}
-
-    >>> config = load_config(Path("config.xml"))
-    >>> print(config)
-    Failure({'error': 'Unsupported file type: .xml'})
+        Result: A dictionary containing the configuration data if successful,
+                or an error message if the file type is unsupported.
     """
     if file_path.suffix in {".yaml", ".yml"}:
         with open(file_path, "r", encoding="utf-8") as f:
