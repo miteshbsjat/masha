@@ -82,10 +82,11 @@ def render_templates_with_filters(
     rendered_dict = input_dict.copy()
 
     for _ in range(max_iterations):
-        new_dict = {
-            key: env.from_string(str(value)).render(rendered_dict)
-            for key, value in rendered_dict.items()
-        }
+        new_dict = {}
+        for key, value in rendered_dict.items():
+            if isinstance(value, str) and "{{" in value:
+                value = env.from_string(value).render(rendered_dict)
+            new_dict[key] = value
         if new_dict == rendered_dict:
             break  # Stop if values don't change
         rendered_dict = new_dict
