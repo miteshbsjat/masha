@@ -27,7 +27,7 @@ class TestTemplateRenderer(unittest.TestCase):
         filters_path = Path(__file__).parent.parent / "masha" / "filters"
         rendered = render_templates_with_filters(inp, str(filters_path))
         # Arrange
-        expected_dict = {'a': 'val_a', 'b': 'from_VAL_A', 'c': 'from from_VAL_A', 'z': '4'}
+        expected_dict = {'a': 'val_a', 'b': 'from_VAL_A', 'c': 'from from_VAL_A', 'z': 4}
         
         # Assert
         self.assertNotEqual(rendered, None)
