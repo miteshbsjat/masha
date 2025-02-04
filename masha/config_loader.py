@@ -11,7 +11,9 @@ from typing import Any, Dict
 import logging
 
 from logger_factory import create_logger
+
 logger = create_logger("masha")
+
 
 # Function to load configuration files
 def load_config(file_path: Path) -> dict:
@@ -27,20 +29,21 @@ def load_config(file_path: Path) -> dict:
     Raises:
     - ValueError: If the file type is not supported.
     """
-    if file_path.suffix == '.yaml' or file_path.suffix == '.yml':
-        with open(file_path, 'r') as f:
+    if file_path.suffix == ".yaml" or file_path.suffix == ".yml":
+        with open(file_path, "r") as f:
             return yaml.safe_load(f)
-    elif file_path.suffix == '.json':
-        with open(file_path, 'r') as f:
+    elif file_path.suffix == ".json":
+        with open(file_path, "r") as f:
             return json.load(f)
-    elif file_path.suffix == '.toml':
+    elif file_path.suffix == ".toml":
         return toml.load(file_path)
-    elif file_path.suffix == '.properties':
+    elif file_path.suffix == ".properties":
         config = configparser.ConfigParser()
         config.read(file_path)
         return {section: dict(config[section]) for section in config.sections()}
     else:
         raise ValueError(f"Unsupported file type: {file_path.suffix}")
+
 
 # Function to merge multiple dictionaries
 def merge_configs(configs: Dict[str, Any]) -> dict:
@@ -78,8 +81,17 @@ def load_and_merge_configs(config_paths: list[Path]):
 
 # CLI entry point
 def main():
-    parser = argparse.ArgumentParser(description="Validate merged configuration files against a Pydantic model.")
-    parser.add_argument("-v", "--variables", nargs='+', type=Path, required=True, help="Paths to the configuration files.")
+    parser = argparse.ArgumentParser(
+        description="Validate merged configuration files against a Pydantic model."
+    )
+    parser.add_argument(
+        "-v",
+        "--variables",
+        nargs="+",
+        type=Path,
+        required=True,
+        help="Paths to the configuration files.",
+    )
 
     args = parser.parse_args()
 
@@ -94,7 +106,6 @@ def main():
         return
 
     print(json.dumps(merged_config))
-
 
 
 if __name__ == "__main__":
