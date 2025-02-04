@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
+"""
+Validate the configuration against pydantic Model class
+"""
 
 import argparse
 from pathlib import Path
 from pydantic import BaseModel, ValidationError
+from returns.result import Result, Success, Failure
+
+# pylint: disable=E0401
 import config_loader
 import env_loader
 import template_renderer
-from returns.result import Result, Success, Failure
 
 from logger_factory import create_logger
 
@@ -20,13 +25,15 @@ def validate_config(config_data: dict, model_class: BaseModel) -> Result[str, st
 
     Parameters:
     config_data (dict): A dictionary containing the configuration data to be validated.
-    model_class (BaseModel): The Pydantic model class that defines the expected structure of the configuration data.
+    model_class (BaseModel): The Pydantic model class that defines the expected structure of
+    the configuration data.
 
     Returns:
     None
 
     Raises:
-    ValidationError: If the configuration data does not match the expected structure defined by `model_class`.
+    ValidationError: If the configuration data does not match the expected structure defined
+    by `model_class`.
     """
     try:
         model_instance = model_class(**config_data)
@@ -39,7 +46,36 @@ def validate_config(config_data: dict, model_class: BaseModel) -> Result[str, st
         return Failure(msg)
 
 
+# pylint: disable=W0122,W0718
 def load_model_class(model_file_path: Path, model_class_name: str):
+    """
+    Load a model class from a specified file path.
+
+    Args:
+        model_file_path (Path): The path to the file containing the model class.
+        model_class_name (str): The name of the model class to load.
+
+    Returns:
+        Optional[Type]: The loaded model class if successful, otherwise None.
+
+    Raises:
+        TypeError: If the specified class is not a subclass of Pydantic BaseModel.
+
+    Notes:
+        - This function reads the content of the file at `model_file_path` and executes it in a
+            local namespace.
+        - It then attempts to retrieve the class named `model_class_name` from this namespace.
+        - If the retrieved class is not a subclass of `BaseModel`, a `TypeError` is raised.
+        - Any exceptions encountered during the execution or retrieval process are logged as
+            warnings.
+
+    Example:
+        >>> model_file_path = Path("path/to/model.py")
+        >>> model_class_name = "MyModel"
+        >>> MyModelClass = load_model_class(model_file_path, model_class_name)
+        >>> if MyModelClass is not None:
+        ...     print(f"Model class {model_class_name} loaded successfully.")
+    """
     try:
         model_globals = {}
         exec(model_file_path.read_text(), model_globals)
@@ -54,26 +90,21 @@ def load_model_class(model_file_path: Path, model_class_name: str):
         return None
 
 
-def validate_merged_config(merged_config, model_class):
-    try:
-        model_class(**merged_config)
-        logger.debug("Validation successful.")
-    except ValidationError as e:
-        logger.warning(f"Validation failed: {e}")
-
-
 # CLI entry point
 def main():
+    """
+    test config validation
+    """
     parser = argparse.ArgumentParser(
-        description="Validate merged configuration files against a Pydantic model."
+        description="Validate merged configurations against a Pydantic model."
     )
     parser.add_argument(
         "-v",
         "--variables",
-        nargs="+",
         type=Path,
+        nargs="+",
         required=True,
-        help="Paths to the configuration files.",
+        help="Paths to the various configuration files.",
     )
     parser.add_argument(
         "-m",
@@ -103,7 +134,7 @@ def main():
         case Success(value):
             merged_config = value
         case Failure(value):
-            logger.warning(f"Failed to load config: {value}")
+            logger.warning(f"Failed to load configs: {value}")
             return
 
     logger.info(merged_config)

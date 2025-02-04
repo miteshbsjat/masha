@@ -9,6 +9,8 @@ import os
 import json
 from pathlib import Path
 from returns.result import Success, Failure
+
+# pylint: disable=E0401
 import config_loader
 
 from logger_factory import create_logger
