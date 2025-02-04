@@ -41,7 +41,7 @@ def load_functions_from_file(file: str):
     return functions
 
 
-def load_filters_from_directory(directory: str):
+def load_functions_from_directory(directory: str):
     """Loads all Python functions from files in the given directory as Jinja2 filters.
 
     Args:
@@ -51,17 +51,20 @@ def load_filters_from_directory(directory: str):
         dict: A dictionary containing filter names as keys and their corresponding callable
               objects as values.
     """
-    filters = {}
+    fxns = {}
     if os.path.exists(directory):
         for filename in os.listdir(directory):
             file_path = os.path.join(directory, filename)
-            filters.update(load_functions_from_file(file_path))
-    return filters
+            fxns.update(load_functions_from_file(file_path))
+    return fxns
 
 
 def render_templates_with_filters(
-    input_dict: dict, filters_directory: str, max_iterations=10
-):
+    input_dict: dict,
+    filters_directory: str = None,
+    tests_directory: str = None,
+    max_iterations=10,
+) -> dict:
     """
     Renders Jinja2 templates in input_dict using custom filters loaded from filters_directory.
     Resolves dependencies between dictionary values iteratively.
@@ -75,9 +78,13 @@ def render_templates_with_filters(
     Returns:
         dict: Dictionary with fully rendered template results.
     """
-    filters = load_filters_from_directory(filters_directory)
     env = jinja2.Environment()
-    env.filters.update(filters)  # Add custom filters
+    if filters_directory:
+        filters = load_functions_from_directory(filters_directory)
+        env.filters.update(filters)  # Add custom filters
+    if tests_directory:
+        tests = load_functions_from_directory(tests_directory)
+        env.tests.update(tests)
 
     rendered_dict = input_dict.copy()
 
@@ -97,12 +104,13 @@ def render_templates_with_filters(
 def main():
     """main function to test this module"""
     inp = {"c": "from {{ b }}", "a": "val_a", "b": "from_{{ a | uppercase }}", "z": 4}
-    inp = {"name": "test", "version": "0.0.2", "debug": "false", "age": 14}
+    # inp = {"name": "test", "version": "0.0.2", "debug": "false", "age": 14}
     logger.debug(f"imput = {inp}")
     filters_path = Path(__file__).parent / "filters"
     logger.debug(f"filters_path = {filters_path}")
+    # Path(__file__).parent / "tests"
     rendered = render_templates_with_filters(inp, str(filters_path))
-    logger.debug(f"rendered = {rendered}")
+    logger.info(f"rendered = {rendered}")
 
 
 if __name__ == "__main__":
