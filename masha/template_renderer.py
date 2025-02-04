@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-    Render jinja2 template defined in configuration
+Render jinja2 template defined in configuration
 """
 
 import os
@@ -9,6 +9,7 @@ from pathlib import Path
 import importlib.util
 import jinja2
 
+# pylint: disable=E0401
 from logger_factory import create_logger
 
 logger = create_logger("masha")
@@ -21,7 +22,7 @@ def load_functions_from_file(file: str):
         file (str): The path to the Python file from which to load functions.
 
     Returns:
-        dict: A dictionary containing function names as keys and their corresponding 
+        dict: A dictionary containing function names as keys and their corresponding
               callable objects as values.
     """
     functions = {}
@@ -47,7 +48,7 @@ def load_filters_from_directory(directory: str):
         directory (str): The path to the directory containing Python files with filter functions.
 
     Returns:
-        dict: A dictionary containing filter names as keys and their corresponding callable 
+        dict: A dictionary containing filter names as keys and their corresponding callable
               objects as values.
     """
     filters = {}
@@ -67,7 +68,7 @@ def render_templates_with_filters(
 
     Args:
         input_dict (dict): Dictionary with Jinja2 templates as values.
-        filters_directory (str): Path to the directory containing Python files with 
+        filters_directory (str): Path to the directory containing Python files with
                                  filter functions.
         max_iterations (int): Maximum number of iterations to resolve dependencies.
 
@@ -93,7 +94,7 @@ def render_templates_with_filters(
 
 
 def main():
-    """ main function to test this module """
+    """main function to test this module"""
     inp = {"c": "from {{ b }}", "a": "val_a", "b": "from_{{ a | uppercase }}", "z": 4}
     inp = {"name": "test", "version": "0.0.2", "debug": "false", "age": 14}
     logger.debug(f"imput = {inp}")

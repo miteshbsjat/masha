@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Dict
 from returns.result import Result, Success, Failure
 
+# pylint: disable=E0401
 from logger_factory import create_logger
 import toml
 import yaml
