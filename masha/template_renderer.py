@@ -52,7 +52,7 @@ def render_templates_with_filters(input_dict: dict, filters_directory: str, max_
     rendered_dict = input_dict.copy()
     
     for _ in range(max_iterations):
-        new_dict = {key: env.from_string(value).render(rendered_dict) for key, value in rendered_dict.items()}
+        new_dict = {key: env.from_string(str(value)).render(rendered_dict) for key, value in rendered_dict.items()}
         if new_dict == rendered_dict:
             break  # Stop if values don't change
         rendered_dict = new_dict
@@ -63,7 +63,8 @@ def main():
     input = {
         "c": "from {{ b }}",
         "a": "val_a",
-        "b": "from_{{ a | uppercase }}"
+        "b": "from_{{ a | uppercase }}",
+        "z": 4
     }
     input = {'name': 'test', 'version': '0.0.2', 'debug': 'false', 'age': 14}
     logger.debug(f"imput = {input}")
