@@ -48,23 +48,26 @@ def load_config(file_path: Path) -> Result[{}, dict]:
         Result: A dictionary containing the configuration data if successful,
                 or an error message if the file type is unsupported.
     """
-    if file_path.suffix in {".yaml", ".yml"}:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return Success(yaml.safe_load(f))
-    elif file_path.suffix == ".json":
-        with open(file_path, "r", encoding="utf-8") as f:
-            return Success(json.load(f))
-    elif file_path.suffix == ".toml":
-        with open(file_path, "r", encoding="utf-8") as f:
-            return Success(toml.load(f))
-    elif file_path.suffix == ".properties":
-        config = configparser.ConfigParser()
-        config.read(file_path)
-        return Success(
-            {section: dict(config[section]) for section in config.sections()}
+    try:
+        if file_path.suffix in {".yaml", ".yml"}:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return Success(yaml.safe_load(f))
+        elif file_path.suffix == ".json":
+            with open(file_path, "r", encoding="utf-8") as f:
+                return Success(json.load(f))
+        elif file_path.suffix == ".toml":
+            with open(file_path, "r", encoding="utf-8") as f:
+                return Success(toml.load(f))
+        elif file_path.suffix == ".properties":
+            config = configparser.ConfigParser()
+            config.read(file_path)
+            return Success(
+                {section: dict(config[section]) for section in config.sections()}
         )
-    else:
-        return Failure({"error": f"Unsupported file type: {file_path.suffix}"})
+        else:
+            return Failure({"error": f"Unsupported file type: {file_path.suffix}"})
+    except FileNotFoundError as e:
+            return Failure({"error": f"File not found: {e}"})
 
 
 # Function to merge multiple dictionaries
@@ -116,8 +119,8 @@ def load_and_merge_configs(config_paths: list[Path]) -> Result[{}, dict]:
             case Success(config_data):
                 configs.append(config_data)
             case Failure(value):
-                msg = f"Error processing file {config_path}: {config_data}"
-                logger.warning(f"Error processing file {config_path}: {value}")
+                msg = f"Error processing file {config_path}: {value}"
+                logger.warning(msg)
                 return Failure({"error": msg})
     merged_config = merge_configs(configs)
     return Success(merged_config)
