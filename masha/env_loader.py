@@ -21,9 +21,6 @@ def load_env_vars(config: dict) -> dict:
     pass
 
 
-import re
-
-
 def resolve_env_variables(config):
     pattern = re.compile(r"\$\{(\w+):\s*(.*?)\}")  # Match ${ENV_VAR: default_value}
 

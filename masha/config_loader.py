@@ -1,5 +1,26 @@
 #!/usr/bin/env python3
 
+"""
+Module Description:
+This module provides functionality to load and merge configuration files from various 
+formats (YAML, JSON, TOML, Properties) into a single dictionary. It also includes a 
+command-line interface (CLI) entry point to facilitate loading and merging configurations.
+
+Functions:
+- `load_config(file_path: Path) -> dict`: Loads a configuration file into a dictionary 
+   based on its file extension.
+- `merge_configs(configs: Dict[str, Any]) -> dict`: Merges multiple dictionaries into one.
+   If there are overlapping keys, the values from later dictionaries will overwrite those from 
+   earlier ones.
+- `load_and_merge_configs(config_paths: list[Path])`: Loads and merges multiple configuration 
+   files specified by their paths.
+
+CLI Entry Point:
+- `main()`: The main function that serves as the entry point for the command-line interface. 
+   It parses command-line arguments, loads and merges configurations, and prints the merged 
+   configuration in JSON format.
+"""
+
 import yaml
 import json
 import toml
@@ -27,14 +48,15 @@ def load_config(file_path: Path) -> dict:
     Raises:
     - ValueError: If the file type is not supported.
     """
-    if file_path.suffix == ".yaml" or file_path.suffix == ".yml":
-        with open(file_path, "r") as f:
+    if file_path.suffix in {".yaml", ".yml"}:
+        with open(file_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
     elif file_path.suffix == ".json":
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
     elif file_path.suffix == ".toml":
-        return toml.load(file_path)
+        with open(file_path, "r", encoding="utf-8") as f:
+            return toml.load(f)
     elif file_path.suffix == ".properties":
         config = configparser.ConfigParser()
         config.read(file_path)
@@ -42,19 +64,20 @@ def load_config(file_path: Path) -> dict:
     else:
         raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-
 # Function to merge multiple dictionaries
 def merge_configs(configs: Dict[str, Any]) -> dict:
     """
     Merge multiple dictionaries into one.
 
     Parameters:
-    configs (Dict[str, Any]): A dictionary where each key is a string representing a configuration name,
-                              and the value is another dictionary containing the configuration settings.
+    configs (Dict[str, Any]): A dictionary where each key is a string representing a 
+                              configuration name, and the value is another dictionary 
+                              containing the configuration settings.
 
     Returns:
-    dict: A single dictionary that contains all the configurations from the input dictionaries.
-          If there are overlapping keys, the values from later dictionaries will overwrite those from earlier ones.
+    dict: A single dictionary that contains all the configurations from the input 
+          dictionaries. If there are overlapping keys, the values from later dictionaries 
+          will overwrite those from earlier ones.
     """
     merged_config = {}
     for config in configs:
