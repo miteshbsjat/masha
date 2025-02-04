@@ -15,10 +15,14 @@ from returns.result import Result, Success, Failure
 import logging
 
 from logger_factory import create_logger
+
 logger = create_logger("masha")
 
+
 # Main validation function
-def validate_config(config_data: dict, model_class: BaseModel) -> Result['Validated', str]:
+def validate_config(
+    config_data: dict, model_class: BaseModel
+) -> Result["Validated", str]:
     """
     Validate the configuration data against the provided Pydantic model class.
 
@@ -42,17 +46,21 @@ def validate_config(config_data: dict, model_class: BaseModel) -> Result['Valida
         logger.warning(msg)
         return Failure(msg)
 
+
 def load_model_class(model_file_path: Path, model_class_name: str):
     try:
         model_globals = {}
         exec(model_file_path.read_text(), model_globals)
         model_class = model_globals[model_class_name]
         if not issubclass(model_class, BaseModel):
-            raise TypeError(f"{model_class_name} is not a subclass of Pydantic BaseModel.")
+            raise TypeError(
+                f"{model_class_name} is not a subclass of Pydantic BaseModel."
+            )
         return model_class
     except Exception as e:
         logger.warning(f"Failed to load the model class: {e}")
         return None
+
 
 def validate_merged_config(merged_config, model_class):
     try:
@@ -61,12 +69,34 @@ def validate_merged_config(merged_config, model_class):
     except ValidationError as e:
         logger.warning(f"Validation failed: {e}")
 
+
 # CLI entry point
 def main():
-    parser = argparse.ArgumentParser(description="Validate merged configuration files against a Pydantic model.")
-    parser.add_argument("-v", "--variables", nargs='+', type=Path, required=True, help="Paths to the configuration files.")
-    parser.add_argument("-m", "--model-file", type=Path, required=True, help="Path to the Python file containing the Pydantic model class.")
-    parser.add_argument("-c", "--class-model", type=str, required=True, help="Name of the Pydantic model class to validate against.")
+    parser = argparse.ArgumentParser(
+        description="Validate merged configuration files against a Pydantic model."
+    )
+    parser.add_argument(
+        "-v",
+        "--variables",
+        nargs="+",
+        type=Path,
+        required=True,
+        help="Paths to the configuration files.",
+    )
+    parser.add_argument(
+        "-m",
+        "--model-file",
+        type=Path,
+        required=True,
+        help="Path to the Python file containing the Pydantic model class.",
+    )
+    parser.add_argument(
+        "-c",
+        "--class-model",
+        type=str,
+        required=True,
+        help="Name of the Pydantic model class to validate against.",
+    )
 
     args = parser.parse_args()
 
@@ -77,7 +107,7 @@ def main():
 
     # Load and merge all configuration files
     merged_config = config_loader.load_and_merge_configs(args.variables)
-            
+
     if not merged_config:
         return
 
@@ -86,7 +116,9 @@ def main():
     logger.info(env_config)
     filters_path = Path(__file__).parent / "filters"
     logger.debug(filters_path)
-    temp_config = template_renderer.render_templates_with_filters(env_config, str(filters_path))
+    temp_config = template_renderer.render_templates_with_filters(
+        env_config, str(filters_path)
+    )
     logger.info(temp_config)
 
     # Validate the merged configuration
@@ -96,6 +128,7 @@ def main():
         logger.info(f"Given config is valid {validation_result}")
     else:
         logger.warning(f"Given config is invalid {validation_result}")
+
 
 if __name__ == "__main__":
     # masha/config_validator.py -v test/config-b.yaml -m test/model.py -c ConfigModel
