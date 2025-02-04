@@ -87,7 +87,9 @@ def load_config(file_path: Path) -> Result[{}, dict]:
     elif file_path.suffix == ".properties":
         config = configparser.ConfigParser()
         config.read(file_path)
-        return Success({section: dict(config[section]) for section in config.sections()})
+        return Success(
+            {section: dict(config[section]) for section in config.sections()}
+        )
     else:
         return Failure({"error": f"Unsupported file type: {file_path.suffix}"})
 
@@ -126,9 +128,9 @@ def load_and_merge_configs(config_paths: list[Path]) -> Result[{}, dict]:
         config_paths (list[Path]): A list of file paths to the configuration files.
 
     Returns:
-        Result[dict, str]: A `Success` containing the merged configuration dictionary 
+        Result[dict, str]: A `Success` containing the merged configuration dictionary
                             if all files are processed successfully.
-                           Otherwise, a `Failure` containing an error message indicating 
+                           Otherwise, a `Failure` containing an error message indicating
                             which file caused the issue.
 
     Raises:

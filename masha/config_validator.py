@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
-import yaml
-import toml
 from pathlib import Path
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ValidationError
 import config_loader
 import env_loader
 import template_renderer
@@ -18,7 +16,7 @@ logger = create_logger("masha")
 # Main validation function
 def validate_config(
     config_data: dict, model_class: BaseModel
-) -> Result["Validated", str]:
+) -> Result[str, str]:
     """
     Validate the configuration data against the provided Pydantic model class.
 
@@ -102,10 +100,13 @@ def main():
         return
 
     # Load and merge all configuration files
-    merged_config = config_loader.load_and_merge_configs(args.variables)
-
-    if not merged_config:
-        return
+    merged_config = None
+    match config_loader.load_and_merge_configs(args.variables):
+        case Success(value):
+            merged_config = value
+        case Failure(value):
+            logger.warning(f"Failed to load config: {value}")
+            return
 
     logger.info(merged_config)
     env_config = env_loader.resolve_env_variables(merged_config)
