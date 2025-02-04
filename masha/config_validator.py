@@ -11,6 +11,10 @@ from typing import Any, Dict
 import config_loader
 import env_loader
 import template_renderer
+import logging
+
+from logger_factory import create_logger
+logger = create_logger("masha")
 
 # Main validation function
 def validate_config(config_data: dict, model_class: BaseModel):
@@ -29,10 +33,10 @@ def validate_config(config_data: dict, model_class: BaseModel):
     """
     try:
         model_instance = model_class(**config_data)
-        print(f"Validation successful: {model_instance}")
+        logger.info(f"Validation successful: {model_instance}")
     except ValidationError as e:
-        print("Validation failed with errors:")
-        print(e.json())
+        logger.warning("Validation failed with errors:")
+        logger.warning(e.json())
 
 def load_model_class(model_file_path: Path, model_class_name: str):
     try:
@@ -43,15 +47,15 @@ def load_model_class(model_file_path: Path, model_class_name: str):
             raise TypeError(f"{model_class_name} is not a subclass of Pydantic BaseModel.")
         return model_class
     except Exception as e:
-        print(f"Failed to load the model class: {e}")
+        logger.warning(f"Failed to load the model class: {e}")
         return None
 
 def validate_merged_config(merged_config, model_class):
     try:
         model_class(**merged_config)
-        print("Validation successful.")
+        logger.debug("Validation successful.")
     except ValidationError as e:
-        print(f"Validation failed: {e}")
+        logger.warning(f"Validation failed: {e}")
 
 # CLI entry point
 def main():
@@ -73,13 +77,13 @@ def main():
     if not merged_config:
         return
 
-    print(merged_config)
+    logger.info(merged_config)
     env_config = env_loader.resolve_env_variables(merged_config)
-    print(env_config)
+    logger.info(env_config)
     filters_path = Path(__file__).parent / "filters"
-    print(filters_path)
+    logger.debug(filters_path)
     temp_config = template_renderer.render_templates_with_filters(env_config, str(filters_path))
-    print(temp_config)
+    logger.info(temp_config)
 
     # Validate the merged configuration
     validate_merged_config(env_config, model_class)
