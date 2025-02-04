@@ -14,9 +14,7 @@ logger = create_logger("masha")
 
 
 # Main validation function
-def validate_config(
-    config_data: dict, model_class: BaseModel
-) -> Result[str, str]:
+def validate_config(config_data: dict, model_class: BaseModel) -> Result[str, str]:
     """
     Validate the configuration data against the provided Pydantic model class.
 
