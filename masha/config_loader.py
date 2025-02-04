@@ -63,11 +63,11 @@ def load_config(file_path: Path) -> Result[{}, dict]:
             config.read(file_path)
             return Success(
                 {section: dict(config[section]) for section in config.sections()}
-        )
+            )
         else:
             return Failure({"error": f"Unsupported file type: {file_path.suffix}"})
     except FileNotFoundError as e:
-            return Failure({"error": f"File not found: {e}"})
+        return Failure({"error": f"File not found: {e}"})
 
 
 # Function to merge multiple dictionaries
