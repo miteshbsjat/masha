@@ -11,13 +11,14 @@ from typing import Any, Dict
 import config_loader
 import env_loader
 import template_renderer
+from returns.result import Result, Success, Failure
 import logging
 
 from logger_factory import create_logger
 logger = create_logger("masha")
 
 # Main validation function
-def validate_config(config_data: dict, model_class: BaseModel):
+def validate_config(config_data: dict, model_class: BaseModel) -> Result['Validated', str]:
     """
     Validate the configuration data against the provided Pydantic model class.
 
@@ -33,10 +34,13 @@ def validate_config(config_data: dict, model_class: BaseModel):
     """
     try:
         model_instance = model_class(**config_data)
-        logger.info(f"Validation successful: {model_instance}")
+        msg = f"Validation successful: {model_instance}"
+        logger.debug(msg)
+        return Success(msg)
     except ValidationError as e:
-        logger.warning("Validation failed with errors:")
-        logger.warning(e.json())
+        msg = f"Validation failed with errors: {e}"
+        logger.warning(msg)
+        return Failure(msg)
 
 def load_model_class(model_file_path: Path, model_class_name: str):
     try:
@@ -86,7 +90,12 @@ def main():
     logger.info(temp_config)
 
     # Validate the merged configuration
-    validate_merged_config(env_config, model_class)
+    # validate_merged_config(env_config, model_class)
+    validation_result = validate_config(env_config, model_class)
+    if isinstance(validation_result, Success):
+        logger.info(f"Given config is valid {validation_result}")
+    else:
+        logger.warning(f"Given config is invalid {validation_result}")
 
 if __name__ == "__main__":
     # masha/config_validator.py -v test/config-b.yaml -m test/model.py -c ConfigModel
