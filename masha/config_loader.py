@@ -2,34 +2,34 @@
 
 """
 Module Description:
-This module provides functionality to load and merge configuration files from various 
-formats (YAML, JSON, TOML, Properties) into a single dictionary. It also includes a 
+This module provides functionality to load and merge configuration files from various
+formats (YAML, JSON, TOML, Properties) into a single dictionary. It also includes a
 command-line interface (CLI) entry point to facilitate loading and merging configurations.
 
 Functions:
-- `load_config(file_path: Path) -> dict`: Loads a configuration file into a dictionary 
+- `load_config(file_path: Path) -> dict`: Loads a configuration file into a dictionary
    based on its file extension.
 - `merge_configs(configs: Dict[str, Any]) -> dict`: Merges multiple dictionaries into one.
-   If there are overlapping keys, the values from later dictionaries will overwrite those from 
+   If there are overlapping keys, the values from later dictionaries will overwrite those from
    earlier ones.
-- `load_and_merge_configs(config_paths: list[Path])`: Loads and merges multiple configuration 
+- `load_and_merge_configs(config_paths: list[Path])`: Loads and merges multiple configuration
    files specified by their paths.
 
 CLI Entry Point:
-- `main()`: The main function that serves as the entry point for the command-line interface. 
-   It parses command-line arguments, loads and merges configurations, and prints the merged 
+- `main()`: The main function that serves as the entry point for the command-line interface.
+   It parses command-line arguments, loads and merges configurations, and prints the merged
    configuration in JSON format.
 """
 
-import yaml
 import json
-import toml
 import configparser
 import argparse
 from pathlib import Path
 from typing import Any, Dict
 
 from logger_factory import create_logger
+import toml
+import yaml
 
 logger = create_logger("masha")
 
@@ -64,19 +64,20 @@ def load_config(file_path: Path) -> dict:
     else:
         raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
+
 # Function to merge multiple dictionaries
 def merge_configs(configs: Dict[str, Any]) -> dict:
     """
     Merge multiple dictionaries into one.
 
     Parameters:
-    configs (Dict[str, Any]): A dictionary where each key is a string representing a 
-                              configuration name, and the value is another dictionary 
+    configs (Dict[str, Any]): A dictionary where each key is a string representing a
+                              configuration name, and the value is another dictionary
                               containing the configuration settings.
 
     Returns:
-    dict: A single dictionary that contains all the configurations from the input 
-          dictionaries. If there are overlapping keys, the values from later dictionaries 
+    dict: A single dictionary that contains all the configurations from the input
+          dictionaries. If there are overlapping keys, the values from later dictionaries
           will overwrite those from earlier ones.
     """
     merged_config = {}
@@ -87,6 +88,15 @@ def merge_configs(configs: Dict[str, Any]) -> dict:
 
 
 def load_and_merge_configs(config_paths: list[Path]):
+    """
+    Load and merge multiple configuration files.
+
+    Args:
+        config_paths (list[Path]): A list of file paths to the configuration files.
+
+    Returns:
+        dict or None: The merged configuration dictionary if successful, otherwise None.
+    """
     configs = []
     for config_path in config_paths:
         try:
@@ -102,6 +112,12 @@ def load_and_merge_configs(config_paths: list[Path]):
 
 # CLI entry point
 def main():
+    """
+    Validates merged configuration files against a Pydantic model.
+
+    This function sets up an argument parser to accept paths to configuration files.
+    It then loads and merges these configuration files, printing the merged result in JSON format.
+    """
     parser = argparse.ArgumentParser(
         description="Validate merged configuration files against a Pydantic model."
     )
