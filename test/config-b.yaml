@@ -1,5 +1,9 @@
 x: Mitesh
 name: "{{ x | uppercase }}"
 version: 0.0.1
-age: "14"
+age: 14
 debug: ${MASHA_DEBUG:false}
+f: "{{ x }}"
+c:
+  d: "{{ x }}"
+  e: "{{ f }}"
