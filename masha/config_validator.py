@@ -149,7 +149,7 @@ def main():
 
     # Validate the merged configuration
     # validate_merged_config(env_config, model_class)
-    validation_result = validate_config(env_config, model_class)
+    validation_result = validate_config(temp_config, model_class)
     if isinstance(validation_result, Success):
         logger.info(f"Given config is valid {validation_result}")
     else:
