@@ -66,17 +66,18 @@ def render_templates_with_filters(
     max_iterations=10,
 ) -> dict:
     """
-    Renders Jinja2 templates in input_dict using custom filters loaded from filters_directory.
-    Resolves dependencies between dictionary values iteratively.
+    Renders templates in a dictionary using Jinja2, applying custom filters and tests.
 
     Args:
-        input_dict (dict): Dictionary with Jinja2 templates as values.
-        filters_directory (str): Path to the directory containing Python files with
-                                 filter functions.
-        max_iterations (int): Maximum number of iterations to resolve dependencies.
+        input_dict (dict): The dictionary containing the template strings to be rendered.
+        filters_directory (str, optional): Path to the directory containing custom filters.
+                                           Defaults to None.
+        tests_directory (str, optional): Path to the directory containing custom tests.
+                                         Defaults to None.
+        max_iterations (int, optional): Maximum number of iterations for rendering. Defaults to 10.
 
     Returns:
-        dict: Dictionary with fully rendered template results.
+        dict: The dictionary with rendered template strings.
     """
     env = jinja2.Environment()
     if filters_directory:
@@ -88,16 +89,19 @@ def render_templates_with_filters(
 
     rendered_dict = input_dict.copy()
 
-    for _ in range(max_iterations):
-        new_dict = {}
-        for key, value in rendered_dict.items():
-            if isinstance(value, str) and "{{" in value:
-                value = env.from_string(value).render(rendered_dict)
-            new_dict[key] = value
-        if new_dict == rendered_dict:
-            break  # Stop if values don't change
-        rendered_dict = new_dict
+    def recursive_render(value):
+        if isinstance(value, dict):
+            return {k: recursive_render(v) for k, v in value.items()}
+        if isinstance(value, str):
+            template = env.from_string(value)
+            return template.render(rendered_dict)
+        return value
 
+    for _ in range(max_iterations):
+        new_dict = recursive_render(rendered_dict)
+        if new_dict == rendered_dict:
+            break
+        rendered_dict = new_dict
     return rendered_dict
 
 
@@ -107,7 +111,7 @@ def main():
         "c": "from {{ b }}",
         "a": "val_a",
         "b": "from_{{ a | uppercase }}",
-        "d": {"e": "{{x}}"},
+        "d": {"e": "{{a}}"},
     }
     # inp = {"name": "test", "version": "0.0.2", "debug": "false", "age": 14}
     logger.debug(f"imput = {inp}")

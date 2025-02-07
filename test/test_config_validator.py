@@ -61,7 +61,8 @@ class TestConfigValidator(unittest.TestCase):
             env_config, str(filters_path)
         )
         logger.debug(temp_config)
-        expected_config = {'name': 'MITESH', 'version': '0.0.1', 'debug': 'false', 'x': 'Mitesh', 'age': 14, 'f': 'Mitesh', 'c': {'d': '{{ x }}', 'e': '{{ f }}'}}
+        expected_config = {'name': 'MITESH', 'version': '0.0.1', 'debug': 'false', 'x': 'Mitesh', 'age': 14, 'f': 'Mitesh', 'c': {'d': 'Mitesh', 'e': 'Mitesh'}}
+        self.assertEqual(temp_config, expected_config)
 
         # Validate the merged configuration
         # validate_merged_config(env_config, model_class)
