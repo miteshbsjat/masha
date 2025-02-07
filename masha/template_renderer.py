@@ -103,7 +103,7 @@ def render_templates_with_filters(
 
 def main():
     """main function to test this module"""
-    inp = {"c": "from {{ b }}", "a": "val_a", "b": "from_{{ a | uppercase }}", "z": 4}
+    inp = {"c": "from {{ b }}", "a": "val_a", "b": "from_{{ a | uppercase }}", "d": {"e": "{{x}}"}}
     # inp = {"name": "test", "version": "0.0.2", "debug": "false", "age": 14}
     logger.debug(f"imput = {inp}")
     filters_path = Path(__file__).parent / "filters"

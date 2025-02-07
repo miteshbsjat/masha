@@ -17,7 +17,7 @@ from template_renderer import render_templates_with_filters
 
 
 ##########################
-test_dir = str(Path(__file__).parent)
+# test_dir = str(Path(__file__).parent)
 
 class TestTemplateRenderer(unittest.TestCase):
 
