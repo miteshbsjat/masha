@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 import click
 import jinja2
-from returns.result import Result, Failure, Success
+from returns.result import Failure, Result, Success
 
 # pylint: disable=W1203
 from masha.config_loader import load_and_merge_configs
@@ -24,7 +24,7 @@ from masha.template_renderer import (
 logger = create_logger("masha")
 
 
-def render_template(
+def render_jinja_template(
     input_file: Path,
     output_file: Path,
     config: Dict[str, Any],
@@ -65,12 +65,14 @@ def render_template(
 
         logger.info(f"Rendered output written to {output_file}")
         return Success(True)
+    # pylint: disable=W0718
     except Exception as e:
         logger.error(f"Failed to render template: {e}")
         return Failure(e)
 
 
-def validate_and_render_config(
+# pylint: disable=R0913,R0917,E1120
+def process_template_with_validation(
     variables: tuple[Path],
     template_filters_directory: Path,
     template_tests_directory: Path,
@@ -80,9 +82,22 @@ def validate_and_render_config(
     class_model: str = None,
 ) -> Result[Dict, Exception]:
     """
-    Validate merged configurations against a Pydantic model and render an input template.
-    
-    Returns the rendered template configuration as a dictionary.
+    Validates merged configurations against a Pydantic model and renders an input template.
+
+    Parameters:
+    - variables (tuple[Path]): A tuple of file paths containing configuration variables.
+    - template_filters_directory (Path): The directory containing custom template filters.
+    - template_tests_directory (Path): The directory containing custom template tests.
+    - output (Path): The path where the rendered template will be saved.
+    - input_file (Path): The path to the input template file.
+    - model_file (Path, optional): The path to a Pydantic model file. If provided,
+                    the configuration will be validated against this model.
+    - class_model (str, optional): The name of the model class within the `model_file`.
+                    Required if `model_file` is provided.
+
+    Returns:
+    - Result[Dict, Exception]: A result object containing either the rendered template
+                    configuration as a dictionary or an exception if any step fails.
     """
 
     merged_config = None
@@ -90,7 +105,9 @@ def validate_and_render_config(
         case Success(value):
             merged_config = value
         case Failure(value):
-            return Failure(ValueError(f"Failed to load configs from files: {value}"))
+            return Failure(
+                ValueError(f"Failed to load configs from files: {value}")
+            )
 
     logger.debug(f"merged_config: {merged_config}")
     env_config = resolve_env_variables(merged_config)
@@ -107,24 +124,28 @@ def validate_and_render_config(
     if model_file and class_model:
         model_class = load_model_class(model_file, class_model)
         if not model_class:
-            return Failure(ValueError("Failed to load the specified model class."))
+            return Failure(
+                ValueError("Failed to load the specified model class.")
+            )
         # Validate the merged configuration
         validation_result = validate_config(template_config, model_class)
         if isinstance(validation_result, Failure):
-            return Failure(ValueError(f"Given config is invalid {validation_result}"))
+            return Failure(
+                ValueError(f"Given config is invalid {validation_result}")
+            )
 
-
-    match render_template(
-            input_file,
-            output,
-            template_config,
-            template_filters_directory,
-            template_tests_directory,
-        ):
+    match render_jinja_template(
+        input_file,
+        output,
+        template_config,
+        template_filters_directory,
+        template_tests_directory,
+    ):
         case Failure(value):
             return Failure(ValueError(f"Failed to render template {value}"))
 
     return Success(template_config)
+
 
 # pylint: disable=R0913,R0917,E1120
 @click.command()
@@ -197,8 +218,15 @@ def main(
     """
     Validate merged configurations against a Pydantic model and render an input template.
     """
-    match validate_and_render_config(variables, template_filters_directory, 
-            template_tests_directory, output, input_file, model_file, class_model):
+    match process_template_with_validation(
+        variables,
+        template_filters_directory,
+        template_tests_directory,
+        output,
+        input_file,
+        model_file,
+        class_model,
+    ):
         case Success(value):
             logger.info("Command run successfully")
         case Failure(value):
