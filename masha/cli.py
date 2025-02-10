@@ -7,18 +7,16 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-# from pydantic import BaseModel, ValidationError
-from returns.result import Success, Failure
 import click
-import jinja2
-
 # pylint: disable=E0401
 import config_loader
-import env_loader
-import template_renderer
 import config_validator
-
+import env_loader
+import jinja2
+import template_renderer
 from logger_factory import create_logger
+# from pydantic import BaseModel, ValidationError
+from returns.result import Failure, Success
 
 logger = create_logger("masha")
 
@@ -47,12 +45,18 @@ def render_template(
         Failure: If an error occurs during rendering.
     """
     try:
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(input_file.parent))
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(input_file.parent)
+        )
         if filters_directory:
-            filters = template_renderer.load_functions_from_directory(filters_directory)
+            filters = template_renderer.load_functions_from_directory(
+                filters_directory
+            )
             env.filters.update(filters)  # Add custom filters
         if tests_directory:
-            tests = template_renderer.load_functions_from_directory(tests_directory)
+            tests = template_renderer.load_functions_from_directory(
+                tests_directory
+            )
             env.tests.update(tests)
         template = env.get_template(input_file.name)
         logger.info(template)
@@ -80,7 +84,9 @@ def render_template(
 @click.option(
     "-m",
     "--model-file",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=False, path_type=Path
+    ),
     required=True,
     help="Path to the Python file containing the Pydantic model class.",
 )
@@ -94,14 +100,18 @@ def render_template(
 @click.option(
     "-f",
     "--template-filters-directory",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(
+        exists=True, file_okay=False, dir_okay=True, path_type=Path
+    ),
     default=None,
     help="Directory containing custom Jinja2 filter functions.",
 )
 @click.option(
     "-t",
     "--template-tests-directory",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(
+        exists=True, file_okay=False, dir_okay=True, path_type=Path
+    ),
     default=None,
     help="Directory containing custom Jinja2 test functions.",
 )
@@ -156,7 +166,9 @@ def main(
     logger.info(json.dumps(temp_config))
 
     # Validate the merged configuration
-    validation_result = config_validator.validate_config(temp_config, model_class)
+    validation_result = config_validator.validate_config(
+        temp_config, model_class
+    )
     if isinstance(validation_result, Success):
         logger.info(f"Given config is valid {validation_result}")
     else:

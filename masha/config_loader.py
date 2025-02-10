@@ -21,17 +21,17 @@ CLI Entry Point:
    configuration in JSON format.
 """
 
-import json
-import configparser
 import argparse
+import configparser
+import json
 from pathlib import Path
 from typing import Any, Dict
-from returns.result import Result, Success, Failure
 
-# pylint: disable=E0401
-from logger_factory import create_logger
 import toml
 import yaml
+# pylint: disable=E0401
+from logger_factory import create_logger
+from returns.result import Failure, Result, Success
 
 logger = create_logger("masha")
 
@@ -62,10 +62,15 @@ def load_config(file_path: Path) -> Result[{}, dict]:
             config = configparser.ConfigParser()
             config.read(file_path)
             return Success(
-                {section: dict(config[section]) for section in config.sections()}
+                {
+                    section: dict(config[section])
+                    for section in config.sections()
+                }
             )
         else:
-            return Failure({"error": f"Unsupported file type: {file_path.suffix}"})
+            return Failure(
+                {"error": f"Unsupported file type: {file_path.suffix}"}
+            )
     except FileNotFoundError as e:
         return Failure({"error": f"File not found: {e}"})
 
