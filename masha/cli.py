@@ -58,7 +58,6 @@ def render_template(
             tests = load_functions_from_directory(tests_directory)
             jenv.tests.update(tests)  # Add custom tests
         template = jenv.get_template(input_file.name)
-        logger.info(template)
         rendered_content = template.render(config)
 
         with open(output_file, "w", encoding="utf-8") as f:
