@@ -9,10 +9,11 @@ import os
 import re
 from pathlib import Path
 
-# pylint: disable=E0401
-import config_loader
-from logger_factory import create_logger
 from returns.result import Failure, Success
+
+# pylint: disable=W1203
+from masha.config_loader import load_and_merge_configs
+from masha.logger_factory import create_logger
 
 logger = create_logger("masha")
 
@@ -69,7 +70,7 @@ def main():
     """
     conf_file = Path(__file__).parent.parent / "test" / "env_config.yaml"
     config = None
-    match config_loader.load_and_merge_configs([conf_file]):
+    match load_and_merge_configs([conf_file]):
         case Success(value):
             config = value
         case Failure(value):
