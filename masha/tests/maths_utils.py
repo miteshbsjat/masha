@@ -15,14 +15,15 @@ def is_even(number):
     """
     return number % 2 == 0
 
+
 def test_is_even(number):
     """
-    Check if a given number is even.
+    Check if a given number is even for yasha.
 
     Args:
-        number (int): The number to check.
+        number (int): The number to check for evne.
 
     Returns:
-        bool: True if the number is even, False otherwise.
+        bool: True if the number is even , False otherwise.
     """
     return number % 2 == 0
