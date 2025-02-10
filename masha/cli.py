@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 import click
 import jinja2
-from returns.result import Failure, Success
+from returns.result import Result, Failure, Success
 
 # pylint: disable=W1203
 from masha.config_loader import load_and_merge_configs
@@ -30,7 +30,7 @@ def render_template(
     config: Dict[str, Any],
     filters_directory: str = None,
     tests_directory: str = None,
-):
+) -> Result[bool, Exception]:
     """
     Render the input file using Jinja2 with the provided configuration.
 
@@ -44,8 +44,8 @@ def render_template(
                             Defaults to None.
 
     Returns:
-        Success: If the template is rendered successfully.
-        Failure: If an error occurs during rendering.
+        Result[bool, Exception]: Success(True) if the template is rendered successfully,
+                                Failure(exception) if an error occurs during rendering.
     """
     try:
         jenv = jinja2.Environment(
@@ -53,7 +53,7 @@ def render_template(
         )
         if filters_directory:
             filters = load_functions_from_directory(filters_directory)
-            jenv.filters.update(filters)  # Add custom filters fuctions
+            jenv.filters.update(filters)  # Add custom filters functions
         if tests_directory:
             tests = load_functions_from_directory(tests_directory)
             jenv.tests.update(tests)  # Add custom tests
@@ -64,9 +64,10 @@ def render_template(
             f.write(rendered_content)
 
         logger.info(f"Rendered output written to {output_file}")
-    # pylint: disable=W0718
+        return Success(True)
     except Exception as e:
         logger.error(f"Failed to render template: {e}")
+        return Failure(e)
 
 
 # pylint: disable=R0913,R0917,E1120
@@ -171,13 +172,15 @@ def main(
         logger.warning(f"Given config is invalid {validation_result}")
         return
 
-    render_template(
-        input_file,
-        output,
-        template_config,
-        template_filters_directory,
-        template_tests_directory,
-    )
+    match render_template(
+            input_file,
+            output,
+            template_config,
+            template_filters_directory,
+            template_tests_directory,
+        ):
+        case Failure(value):
+            logger.warning(f"Failed to render template {value}")
 
 
 if __name__ == "__main__":
