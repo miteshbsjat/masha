@@ -70,6 +70,62 @@ def render_template(
         return Failure(e)
 
 
+def validate_and_render_config(
+    variables: tuple[Path],
+    template_filters_directory: Path,
+    template_tests_directory: Path,
+    output: Path,
+    input_file: Path,
+    model_file: Path = None,
+    class_model: str = None,
+) -> Result[Dict, Exception]:
+    """
+    Validate merged configurations against a Pydantic model and render an input template.
+    
+    Returns the rendered template configuration as a dictionary.
+    """
+
+    merged_config = None
+    match load_and_merge_configs(variables):
+        case Success(value):
+            merged_config = value
+        case Failure(value):
+            return Failure(ValueError(f"Failed to load configs from files: {value}"))
+
+    logger.debug(f"merged_config: {merged_config}")
+    env_config = resolve_env_variables(merged_config)
+    logger.debug(f"env_config: {env_config}")
+    filters_path = template_filters_directory
+    tests_path = template_tests_directory
+    logger.debug(f"filters_path: {filters_path}")
+    template_config = render_templates_with_filters(
+        env_config, str(filters_path), str(tests_path)
+    )
+    logger.info(json.dumps(template_config))
+
+    # Load the model class
+    if model_file and class_model:
+        model_class = load_model_class(model_file, class_model)
+        if not model_class:
+            return Failure(ValueError("Failed to load the specified model class."))
+        # Validate the merged configuration
+        validation_result = validate_config(template_config, model_class)
+        if isinstance(validation_result, Failure):
+            return Failure(ValueError(f"Given config is invalid {validation_result}"))
+
+
+    match render_template(
+            input_file,
+            output,
+            template_config,
+            template_filters_directory,
+            template_tests_directory,
+        ):
+        case Failure(value):
+            return Failure(ValueError(f"Failed to render template {value}"))
+
+    return Success(template_config)
+
 # pylint: disable=R0913,R0917,E1120
 @click.command()
 @click.option(
@@ -86,14 +142,16 @@ def render_template(
     type=click.Path(
         exists=True, file_okay=True, dir_okay=False, path_type=Path
     ),
-    required=True,
+    required=False,
+    default=None,
     help="Path to the Python file containing the Pydantic model class.",
 )
 @click.option(
     "-c",
     "--class-model",
     type=str,
-    required=True,
+    required=False,
+    default=None,
     help="Name of the Pydantic model class to validate against.",
 )
 @click.option(
@@ -139,48 +197,12 @@ def main(
     """
     Validate merged configurations against a Pydantic model and render an input template.
     """
-    # Load the model class
-    model_class = load_model_class(model_file, class_model)
-    if not model_class:
-        click.echo("Failed to load the specified model class.", err=True)
-        return
-
-    merged_config = None
-    match load_and_merge_configs(variables):
+    match validate_and_render_config(variables, template_filters_directory, 
+            template_tests_directory, output, input_file, model_file, class_model):
         case Success(value):
-            merged_config = value
+            logger.info("Command run successfully")
         case Failure(value):
-            logger.warning(f"Failed to load configs from files: {value}")
-            return
-
-    logger.debug(f"merged_config: {merged_config}")
-    env_config = resolve_env_variables(merged_config)
-    logger.debug(f"env_config: {env_config}")
-    filters_path = template_filters_directory
-    tests_path = template_tests_directory
-    logger.debug(f"filters_path: {filters_path}")
-    template_config = render_templates_with_filters(
-        env_config, str(filters_path), str(tests_path)
-    )
-    logger.info(json.dumps(template_config))
-
-    # Validate the merged configuration
-    validation_result = validate_config(template_config, model_class)
-    if isinstance(validation_result, Success):
-        logger.info(f"Given config is valid {validation_result}")
-    else:
-        logger.warning(f"Given config is invalid {validation_result}")
-        return
-
-    match render_template(
-            input_file,
-            output,
-            template_config,
-            template_filters_directory,
-            template_tests_directory,
-        ):
-        case Failure(value):
-            logger.warning(f"Failed to render template {value}")
+            logger.error(f"Command failed with error {value}")
 
 
 if __name__ == "__main__":
