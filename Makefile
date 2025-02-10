@@ -2,14 +2,18 @@
 
 py_src_files = masha/*.py masha/filters/*.py masha/tests/*.py
 
-lint: $(py_src_files)
-	python3 -m black $(py_src_files)
-	autoflake --in-place --remove-unused-variables $(py_src_files)
-	ruff check $(py_src_files)
-	pylint $(py_src_files)
+py_test_files = test/test_*.py
 
-test: masha/*.py test/test_*.py
-	python3 -m unittest test/test_*.py
+lint: $(py_src_files)
+	python3 -m black $^
+	autoflake --in-place --remove-unused-variables $^
+	ruff check $^
+	pylint $^
+	black $^
+	isort masha/
+
+test: $(py_src_files) $(py_test_files)
+	python3 -m unittest $(py_test_files)
 
 clean:
 	find . -name "__pycache__" | xargs -L 1 rm -rvf

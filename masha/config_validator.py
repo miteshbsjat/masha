@@ -5,21 +5,22 @@ Validate the configuration against pydantic Model class
 
 import argparse
 from pathlib import Path
-from pydantic import BaseModel, ValidationError
-from returns.result import Result, Success, Failure
 
 # pylint: disable=E0401
 import config_loader
 import env_loader
 import template_renderer
-
 from logger_factory import create_logger
+from pydantic import BaseModel, ValidationError
+from returns.result import Failure, Result, Success
 
 logger = create_logger("masha")
 
 
 # Main validation function
-def validate_config(config_data: dict, model_class: BaseModel) -> Result[str, str]:
+def validate_config(
+    config_data: dict, model_class: BaseModel
+) -> Result[str, str]:
     """
     Validate the configuration data against the provided Pydantic model class.
 

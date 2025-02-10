@@ -4,11 +4,11 @@
 Render jinja2 template defined in configuration
 """
 
+import importlib.util
 import os
 from pathlib import Path
-import importlib.util
-import jinja2
 
+import jinja2
 # pylint: disable=E0401
 from logger_factory import create_logger
 

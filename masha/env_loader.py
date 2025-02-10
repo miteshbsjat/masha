@@ -4,16 +4,15 @@
 Loads the environment variable in configuration value
 """
 
-import re
-import os
 import json
+import os
+import re
 from pathlib import Path
-from returns.result import Success, Failure
 
 # pylint: disable=E0401
 import config_loader
-
 from logger_factory import create_logger
+from returns.result import Failure, Success
 
 logger = create_logger("masha")
 
@@ -38,7 +37,9 @@ def resolve_env_variables(config) -> dict:
     Returns:
         dict: A new dictionary with all environment variable placeholders resolved.
     """
-    pattern = re.compile(r"\$\{(\w+):\s*(.*?)\}")  # Match ${ENV_VAR: default_value}
+    pattern = re.compile(
+        r"\$\{(\w+):\s*(.*?)\}"
+    )  # Match ${ENV_VAR: default_value}
 
     def resolve_value(value):
         if isinstance(value, str):
@@ -48,7 +49,9 @@ def resolve_env_variables(config) -> dict:
                 if default_value == "null":
                     default_value = None
                 return os.getenv(env_var, default_value)
-        elif isinstance(value, dict):  # Recursively resolve nested dictionaries
+        elif isinstance(
+            value, dict
+        ):  # Recursively resolve nested dictionaries
             return {k: resolve_value(v) for k, v in value.items()}
         elif isinstance(value, list):  # Recursively resolve lists
             return [resolve_value(v) for v in value]
