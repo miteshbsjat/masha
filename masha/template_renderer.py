@@ -4,13 +4,14 @@
 Render jinja2 template defined in configuration
 """
 
+import importlib.util
 import os
 from pathlib import Path
-import importlib.util
+
 import jinja2
 
-# pylint: disable=E0401
-from logger_factory import create_logger
+# pylint: disable=W1203
+from masha.logger_factory import create_logger
 
 logger = create_logger("masha")
 

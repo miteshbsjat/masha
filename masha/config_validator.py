@@ -6,13 +6,14 @@ Validate the configuration against pydantic Model class
 import argparse
 from pathlib import Path
 
-# pylint: disable=E0401
-import config_loader
-import env_loader
-import template_renderer
-from logger_factory import create_logger
 from pydantic import BaseModel, ValidationError
 from returns.result import Failure, Result, Success
+
+# pylint: disable=W1203
+from masha.config_loader import load_and_merge_configs
+from masha.env_loader import resolve_env_variables
+from masha.logger_factory import create_logger
+from masha.template_renderer import render_templates_with_filters
 
 logger = create_logger("masha")
 
@@ -131,7 +132,7 @@ def main():
 
     # Load and merge all configuration files
     merged_config = None
-    match config_loader.load_and_merge_configs(args.variables):
+    match load_and_merge_configs(args.variables):
         case Success(value):
             merged_config = value
         case Failure(value):
@@ -139,13 +140,11 @@ def main():
             return
 
     logger.info(merged_config)
-    env_config = env_loader.resolve_env_variables(merged_config)
+    env_config = resolve_env_variables(merged_config)
     logger.info(env_config)
     filters_path = Path(__file__).parent / "filters"
     logger.debug(filters_path)
-    temp_config = template_renderer.render_templates_with_filters(
-        env_config, str(filters_path)
-    )
+    temp_config = render_templates_with_filters(env_config, str(filters_path))
     logger.info(temp_config)
 
     # Validate the merged configuration

@@ -8,15 +8,18 @@ from pathlib import Path
 from typing import Any, Dict
 
 import click
-# pylint: disable=E0401
-import config_loader
-import config_validator
-import env_loader
 import jinja2
-import template_renderer
-from logger_factory import create_logger
-# from pydantic import BaseModel, ValidationError
 from returns.result import Failure, Success
+
+# pylint: disable=W1203
+from masha.config_loader import load_and_merge_configs
+from masha.config_validator import load_model_class, validate_config
+from masha.env_loader import resolve_env_variables
+from masha.logger_factory import create_logger
+from masha.template_renderer import (
+    load_functions_from_directory,
+    render_templates_with_filters,
+)
 
 logger = create_logger("masha")
 
@@ -45,20 +48,16 @@ def render_template(
         Failure: If an error occurs during rendering.
     """
     try:
-        env = jinja2.Environment(
+        jenv = jinja2.Environment(
             loader=jinja2.FileSystemLoader(input_file.parent)
         )
         if filters_directory:
-            filters = template_renderer.load_functions_from_directory(
-                filters_directory
-            )
-            env.filters.update(filters)  # Add custom filters
+            filters = load_functions_from_directory(filters_directory)
+            jenv.filters.update(filters)  # Add custom filters fuctions
         if tests_directory:
-            tests = template_renderer.load_functions_from_directory(
-                tests_directory
-            )
-            env.tests.update(tests)
-        template = env.get_template(input_file.name)
+            tests = load_functions_from_directory(tests_directory)
+            jenv.tests.update(tests)  # Add custom tests
+        template = jenv.get_template(input_file.name)
         logger.info(template)
         rendered_content = template.render(config)
 
@@ -141,13 +140,13 @@ def main(
     Validate merged configurations against a Pydantic model and render an input template.
     """
     # Load the model class
-    model_class = config_validator.load_model_class(model_file, class_model)
+    model_class = load_model_class(model_file, class_model)
     if not model_class:
         click.echo("Failed to load the specified model class.", err=True)
         return
 
     merged_config = None
-    match config_loader.load_and_merge_configs(variables):
+    match load_and_merge_configs(variables):
         case Success(value):
             merged_config = value
         case Failure(value):
@@ -155,20 +154,18 @@ def main(
             return
 
     logger.debug(f"merged_config: {merged_config}")
-    env_config = env_loader.resolve_env_variables(merged_config)
+    env_config = resolve_env_variables(merged_config)
     logger.debug(f"env_config: {env_config}")
     filters_path = template_filters_directory
     tests_path = template_tests_directory
     logger.debug(f"filters_path: {filters_path}")
-    temp_config = template_renderer.render_templates_with_filters(
+    template_config = render_templates_with_filters(
         env_config, str(filters_path), str(tests_path)
     )
-    logger.info(json.dumps(temp_config))
+    logger.info(json.dumps(template_config))
 
     # Validate the merged configuration
-    validation_result = config_validator.validate_config(
-        temp_config, model_class
-    )
+    validation_result = validate_config(template_config, model_class)
     if isinstance(validation_result, Success):
         logger.info(f"Given config is valid {validation_result}")
     else:
@@ -178,7 +175,7 @@ def main(
     render_template(
         input_file,
         output,
-        temp_config,
+        template_config,
         template_filters_directory,
         template_tests_directory,
     )

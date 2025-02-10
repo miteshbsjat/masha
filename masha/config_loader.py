@@ -29,9 +29,10 @@ from typing import Any, Dict
 
 import toml
 import yaml
-# pylint: disable=E0401
-from logger_factory import create_logger
 from returns.result import Failure, Result, Success
+
+# pylint: disable=W1203
+from masha.logger_factory import create_logger
 
 logger = create_logger("masha")
 
@@ -161,10 +162,10 @@ def main():
     # Load and merge all configuration files
     merged_config = None
     match load_and_merge_configs(args.variables):
-        case Success(value):
-            merged_config = value
-        case Failure(value):
-            logger.warning(f"Failed to load config: {value}")
+        case Success(val):
+            merged_config = val
+        case Failure(val):
+            logger.warning(f"Failed to load config: {val}")
             return
 
     print(json.dumps(merged_config))
