@@ -15,6 +15,7 @@ def uppercase(s: str) -> str:
     """
     return s.upper()
 
+
 def lowercase(s: str) -> str:
     """
     Converts the given string to lowercase.

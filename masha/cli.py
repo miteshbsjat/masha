@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+"""
+Render the input file using Jinja2 with the provided configuration.
+"""
 
+import json
 from pathlib import Path
-from pydantic import BaseModel, ValidationError
-from returns.result import Result, Success, Failure
 from typing import Any, Dict
+
+# from pydantic import BaseModel, ValidationError
+from returns.result import Success, Failure
 import click
 import jinja2
-import json
 
 # pylint: disable=E0401
 import config_loader
@@ -18,15 +22,29 @@ from logger_factory import create_logger
 
 logger = create_logger("masha")
 
+
 def render_template(
-    input_file: Path, 
-    output_file: Path, 
-    config: Dict[str, Any], 
+    input_file: Path,
+    output_file: Path,
+    config: Dict[str, Any],
     filters_directory: str = None,
     tests_directory: str = None,
 ):
     """
     Render the input file using Jinja2 with the provided configuration.
+
+    Args:
+        input_file (Path): The path to the input template file.
+        output_file (Path): The path where the rendered output will be saved.
+        config (Dict[str, Any]): A dictionary containing the configuration for rendering.
+        filters_directory (str, optional): The directory containing custom Jinja2 filters.
+                            Defaults to None.
+        tests_directory (str, optional): The directory containing custom Jinja2 tests.
+                            Defaults to None.
+
+    Returns:
+        Success: If the template is rendered successfully.
+        Failure: If an error occurs during rendering.
     """
     try:
         env = jinja2.Environment(loader=jinja2.FileSystemLoader(input_file.parent))
@@ -44,10 +62,12 @@ def render_template(
             f.write(rendered_content)
 
         logger.info(f"Rendered output written to {output_file}")
+    # pylint: disable=W0718
     except Exception as e:
         logger.error(f"Failed to render template: {e}")
 
 
+# pylint: disable=R0913,R0917,E1120
 @click.command()
 @click.option(
     "-v",
@@ -73,7 +93,7 @@ def render_template(
 )
 @click.option(
     "-f",
-    "--template-functions-directory",
+    "--template-filters-directory",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     default=None,
     help="Directory containing custom Jinja2 filter functions.",
@@ -93,19 +113,19 @@ def render_template(
     help="Path to the output file where the rendered content will be written.",
 )
 @click.argument(
-    'input_file',
+    "input_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
     # help="Path to the input template file.",
 )
 def main(
     variables: tuple[Path],
-    model_file: Path, 
-    class_model: str, 
-    template_functions_directory: Path, 
-    template_tests_directory: Path, 
-    output: Path, 
-    input_file: Path
+    model_file: Path,
+    class_model: str,
+    template_filters_directory: Path,
+    template_tests_directory: Path,
+    output: Path,
+    input_file: Path,
 ):
     """
     Validate merged configurations against a Pydantic model and render an input template.
@@ -121,15 +141,15 @@ def main(
         case Success(value):
             merged_config = value
         case Failure(value):
-            logger.warning(f"Failed to load configs: {value}")
+            logger.warning(f"Failed to load configs from files: {value}")
             return
-    
-    logger.info(merged_config)
+
+    logger.debug(f"merged_config: {merged_config}")
     env_config = env_loader.resolve_env_variables(merged_config)
-    logger.info(env_config)
-    filters_path = template_functions_directory
+    logger.debug(f"env_config: {env_config}")
+    filters_path = template_filters_directory
     tests_path = template_tests_directory
-    logger.debug(filters_path)
+    logger.debug(f"filters_path: {filters_path}")
     temp_config = template_renderer.render_templates_with_filters(
         env_config, str(filters_path), str(tests_path)
     )
@@ -143,9 +163,13 @@ def main(
         logger.warning(f"Given config is invalid {validation_result}")
         return
 
-    render_template(input_file, output, temp_config, template_functions_directory, template_tests_directory)
-
-    
+    render_template(
+        input_file,
+        output,
+        temp_config,
+        template_filters_directory,
+        template_tests_directory,
+    )
 
 
 if __name__ == "__main__":

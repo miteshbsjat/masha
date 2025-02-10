@@ -9,5 +9,6 @@ from .template_renderer import (
 )
 from .config_validator import validate_config, load_model_class
 from .logger_factory import create_logger
+from .version import __version__
 
 __all__ = "masha"
