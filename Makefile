@@ -7,10 +7,10 @@ py_test_files = test/test_*.py
 lint: $(py_src_files)
 	python3 -m black $^
 	autoflake --in-place --remove-unused-variables $^
+	isort masha/
 	ruff check $^
 	pylint $^
 	black $^
-	isort masha/
 
 test: $(py_src_files) $(py_test_files)
 	python3 -m unittest $(py_test_files)

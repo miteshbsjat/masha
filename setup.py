@@ -31,8 +31,20 @@ setuptools.setup(
     project_urls = {                                # Optional
         "Bug Tracker": "https://github.com/miteshbsjat/masha/issues"
     },
-    install_requires=[],                            # list all packages that your package uses
-    keywords=["pypi", "masha", "shell"],           #descriptive meta-data
+    install_requires=[
+        "pyyaml>=6.0.2",
+        "toml>=0.10.2",
+        "result>=0.17.0",
+        "pydantic>=2.10.6",
+        "Jinja2>=3.1.5",
+        "returns>=0.24.0",
+        "click>=8.1.8",
+    ],                            # list all packages that your package uses
+    entry_points='''
+        [console_scripts]
+        masha=masha.cli:main
+    ''',
+    keywords=["pypi", "masha", "shell", "yaml", "json", "jinja2", "configuration"],           #descriptive meta-data
     classifiers=[                                   # https://pypi.org/classifiers
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -52,12 +64,12 @@ setuptools.setup(
         'Operating System :: MacOS',
         'Operating System :: Unix',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
     
-    download_url="https://github.com/miteshbsjat/masha/archive/refs/tags/0.0.0.tar.gz",
+    download_url=f"https://github.com/miteshbsjat/masha/archive/refs/tags/{__version__}.tar.gz",
     cmdclass={'test': Run_TestSuite},
 )
