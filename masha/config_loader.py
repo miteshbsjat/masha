@@ -98,7 +98,7 @@ def merge_configs(configs: Dict[str, Any]) -> dict:
     return merged_config
 
 
-def load_and_merge_configs(config_paths: list[Path]) -> Result[{}, dict]:
+def load_and_merge_configs(config_paths: list[Path]) -> Result[Dict, Dict]:
     """
     Load and merge multiple configuration files.
 
