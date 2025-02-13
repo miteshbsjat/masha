@@ -2,6 +2,23 @@
 
 MASHup of Configuration Loading from several file types and run [yAsha](https://github.com/kblomqvist/yasha/tree/master/yasha) like Jinja2 template rendition with [Validation](https://github.com/miteshbsjat/cli_config_validator).
 
+## Motivation
+* `MASHA` or `Magnificient yASHA`, is the name chosen, to show the amalgamation(`MASHa UP`) of my ideas and [`yasha` tool](https://github.com/kblomqvist/yasha). It has been inspired by these following magnificient tools or libraries:-
+  * [`env-yaml-python`](https://github.com/iamKunal/env-yaml-python) helps in using ENV variable in the yaml configuration file.
+  * [`j2yaml`](https://pypi.org/project/j2yaml/) looks good tool to be used for having templates inside `yaml` configuration files.
+  * [`cli_config_validator`](https://github.com/miteshbsjat/cli_config_validator) configuration validation.
+  * [`yasha`](https://github.com/kblomqvist/yasha) code generation tool based on jinja2 template rendition.
+
+
+<table>
+  <tr>
+  <td><img src="docs/images/masha.jpg" width="135" height="100"></td>
+<td>MASHA (name) is inspired from Cartoon Series <a href="https://en.wikipedia.org/wiki/Masha_and_the_Bear">Masha and Bear</a>. Like in this cartoon, a girl named `Masha` plays with the bear name `Mishka`, similarly, my daughter named `Diyanjali` plays with her father named `Mitesh` (i.e. me). :) <br />
+The Masha logo is combination of Masha (the girl) and Yasha (the Katana Sword). 
+</td>
+  </tr>
+</table>
+
 ## Installation
 
 You can install `masha` via pip. Ensure you have Python 3.10 or later installed on your system:
@@ -31,6 +48,32 @@ Alternatively, if you prefer to install from the source code (requires `poetry`)
    ```
 
 ## Usage
+
+### masha help
+```sh
+$ masha --help
+Usage: masha [OPTIONS] INPUT_FILE
+
+  Validate merged configurations against a Pydantic model and render an input
+  template.
+
+Options:
+  -v, --variables FILE            Path(s) to the various configuration files.
+                                  [required]
+  -m, --model-file FILE           Path to the Python file containing the
+                                  Pydantic model class.
+  -c, --class-model TEXT          Name of the Pydantic model class to validate
+                                  against.
+  -f, --template-filters-directory DIRECTORY
+                                  Directory containing custom Jinja2 filter
+                                  functions.
+  -t, --template-tests-directory DIRECTORY
+                                  Directory containing custom Jinja2 test
+                                  functions.
+  -o, --output FILE               Path to the output file where the rendered
+                                  content will be written.  [required]
+  --help                          Show this message and exit.
+```
 
 ### Basic Usage
 

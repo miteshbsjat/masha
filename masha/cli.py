@@ -155,7 +155,7 @@ def process_template_with_validation(
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     multiple=True,
     required=True,
-    help="Paths to the various configuration files.",
+    help="Path(s) to the various configuration files.",
 )
 @click.option(
     "-m",
