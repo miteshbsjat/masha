@@ -1,4 +1,4 @@
-# `masha` Example
+# `masha` Usage Examples
 
 The masha command-line utility is designed to simplify the process of generating output files by merging multiple configuration files with Jinja2 templates.
 
