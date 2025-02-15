@@ -75,7 +75,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-### Basic Usage
+### Sample Usage
 
 To use `masha`, you can run it from the command line with various options to load configuration files and render templates.
 
@@ -87,7 +87,7 @@ masha -v test/config-a.yaml -v test/config-b.yaml \
   test/input.txt.j2
 ```
 
-### Advanced Usage
+### Basic Usage
 
 #### Specifying Multiple Configurations
 
@@ -113,7 +113,7 @@ This came from env MY_VAR = some_value
 ```
 
 
-### Example Configuration File (`config.yaml`)
+#### Example Configuration File (`config.yaml`)
 
 Here is an example configuration file in YAML format:
 
@@ -129,7 +129,7 @@ database:
   password: pass
 ```
 
-### Example Template File (`template.j2`)
+#### Example Template File (`template.j2`)
 
 Here is a simple Jinja2 template file:
 
@@ -143,7 +143,7 @@ Database configuration:
 - Password: {{ database.password }}
 ```
 
-### Output
+#### Output
 
 Running the command with the above example files would produce an output file (`output.txt`) like this:
 
@@ -156,6 +156,10 @@ Database configuration:
 - Username: user
 - Password: pass
 ```
+
+### More Examples
+
+More examples of `masha` usage are provided in [**examples.md**](docs/examples.md).
 
 ## License
 
