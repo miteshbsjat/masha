@@ -4,6 +4,7 @@ Render the input file using Jinja2 with the provided configuration.
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
@@ -229,8 +230,10 @@ def main(
     ):
         case Success(value):
             logger.info("Command run successfully")
+            sys.exit(0)
         case Failure(value):
             logger.error(f"Command failed with error {value}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
