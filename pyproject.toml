@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "masha"
-version = "0.0.1"
+version = "0.0.2"
 description = "MASHup of Configuration Loading from several file types and run yAsha like Jinja2 template rendition with Validation"
 authors = ["Mitesh Jat <mitesh.singh.jat@gmail.com>"]
 license = "MIT"

@@ -44,7 +44,7 @@ Alternatively, if you prefer to install from the source code (requires `poetry`)
    poetry shell
    poetry install
    poetry build
-   pip3 install --force-reinstall dist/masha-0.0.1-py3-none-any.whl --user
+   pip3 install --force-reinstall dist/masha-0.0.2-py3-none-any.whl --user
    ```
 
 ## Usage
