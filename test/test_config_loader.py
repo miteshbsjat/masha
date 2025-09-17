@@ -63,6 +63,21 @@ class TestLoadAndMergeConfigs(unittest.TestCase):
         self.assertNotEqual(config, None)
         self.assertEqual(config, {'keya': 'vala', 'keyb': 'val2', 'keyc': {'keyca': 'valca'}})
 
+    def test_happy_path(self):
+        # Arrange
+        config_paths = Path(test_dir) / "config-d.yaml"
+        
+        # Act
+        result = load_and_merge_configs([config_paths])
+        config = None
+        match result:
+            case Success(value):
+                config = value
+        
+        # Assert
+        self.assertNotEqual(config, None)
+        self.assertEqual(config, {})
+    
     def test_happy_multiple_paths(self):
         # Arrange
         config_path1 = Path(test_dir) / "config1.yaml"

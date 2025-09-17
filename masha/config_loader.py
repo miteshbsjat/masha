@@ -93,6 +93,8 @@ def merge_configs(configs: Dict[str, Any]) -> dict:
     """
     merged_config = {}
     for config in configs:
+        if config is None:
+            continue  # skip empty file
         merged_config.update(config)
     logger.debug(f"merged_config = {merged_config}")
     return merged_config
