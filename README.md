@@ -39,13 +39,31 @@ Alternatively, if you prefer to install from the source code (requires `poetry`)
    cd masha
    ```
 
-3. Install the package using setuptools:
+3. Install the package using poetry:
    ```bash
    poetry shell
    poetry install
    poetry build
-   pip3 install --force-reinstall dist/masha-0.0.2-py3-none-any.whl --user
+   pip3 install --force-reinstall dist/masha-0.0.5-py3-none-any.whl --user
    ```
+
+## Best Practices Implemented
+
+This project follows strict Python best practices as documented in [CLAUDE.md](CLAUDE.md):
+
+- **Logging**: All runtime output uses the standard `logging` module with lazy interpolation (`%s`) for performance. No `print()` calls are used.
+- **Error Handling**: Custom exception hierarchy (`MashaBaseError`, `ConfigLoadError`, `ModelValidationError`, `TemplateRenderError`) with graceful CLI error handling.
+- **Type Hints**: All functions have strict type annotations for parameters and return types.
+- **Graceful Failures**: Users never see raw tracebacks; errors are logged internally and clean messages are shown via Click's output streams.
+- **Verbose Mode**: Use the `--verbose` / `-V` flag to enable DEBUG-level logging for troubleshooting.
+
+## Testing
+
+Run the full test suite with:
+
+```bash
+poetry run python -m pytest test/ -v
+```
 
 ## Usage
 
@@ -72,7 +90,8 @@ Options:
                                   functions.
   -o, --output FILE               Path to the output file where the rendered
                                   content will be written.  [required]
-  --help                          Show this message and exit.
+    -V, --verbose                  Enable debug logging.
+    --help                          Show this message and exit.
 ```
 
 ### Sample Usage
