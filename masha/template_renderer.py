@@ -1,89 +1,90 @@
-#!/usr/bin/env python3
-
 """
-Render jinja2 template defined in configuration
+Render jinja2 template defined in configuration.
 """
 
 import importlib.util
-import os
+import logging
 from pathlib import Path
+from typing import Dict, Optional
 
 import jinja2
 
-# pylint: disable=W1203
+from masha.exceptions import TemplateRenderError
 from masha.logger_factory import create_logger
 
 logger = create_logger("masha")
 
 
-def load_functions_from_file(file: str):
-    """Loads all Python functions from a given file.
+def load_functions_from_file(file: str) -> Dict[str, object]:
+    """
+    Load all Python functions from a given file.
 
     Args:
-        file (str): The path to the Python file from which to load functions.
+        file: The path to the Python file from which to load functions.
 
     Returns:
-        dict: A dictionary containing function names as keys and their corresponding
-              callable objects as values.
+        A dictionary containing function names as keys and their
+        callable objects as values.
     """
     functions = {}
-    if os.path.exists(file) and file.endswith(".py"):
+    if file.endswith(".py"):
         module_name = file[:-3]  # Remove '.py' extension
         spec = importlib.util.spec_from_file_location(module_name, file)
+        if spec is None or spec.loader is None:
+            return functions
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if callable(attr) and not attr_name.startswith(
-                "_"
-            ):  # Only include functions
+            if callable(attr) and not attr_name.startswith("_"):
                 functions[attr_name] = attr
     return functions
 
 
-def load_functions_from_directory(directory: str):
-    """Loads all Python functions from files in the given directory as Jinja2 filters.
+def load_functions_from_directory(directory: str) -> Dict[str, object]:
+    """
+    Load all Python functions from files in the given directory as Jinja2 filters.
 
     Args:
-        directory (str): The path to the directory containing Python files with filter functions.
+        directory: The path to the directory containing Python files with filter functions.
 
     Returns:
-        dict: A dictionary containing filter names as keys and their corresponding callable
-              objects as values.
+        A dictionary containing filter names as keys and their callable objects as values.
     """
     fxns = {}
+    import os
+
     if os.path.exists(directory):
         for filename in os.listdir(directory):
             file_path = os.path.join(directory, filename)
-            fxns.update(load_functions_from_file(file_path))
+            if os.path.isfile(file_path):
+                fxns.update(load_functions_from_file(file_path))
     return fxns
 
 
 def render_templates_with_filters(
     input_dict: dict,
-    filters_directory: str = None,
-    tests_directory: str = None,
-    max_iterations=10,
+    filters_directory: Optional[str] = None,
+    tests_directory: Optional[str] = None,
+    max_iterations: int = 10,
 ) -> dict:
     """
-    Renders templates in a dictionary using Jinja2, applying custom filters and tests.
+    Render templates in a dictionary using Jinja2, applying custom filters and tests.
 
     Args:
-        input_dict (dict): The dictionary containing the template strings to be rendered.
-        filters_directory (str, optional): Path to the directory containing custom filters.
-                                           Defaults to None.
-        tests_directory (str, optional): Path to the directory containing custom tests.
-                                         Defaults to None.
-        max_iterations (int, optional): Maximum number of iterations for rendering. Defaults to 10.
+        input_dict: The dictionary containing the template strings to render.
+        filters_directory: Path to the directory containing custom filters.
+        tests_directory: Path to the directory containing custom tests.
+        max_iterations: Maximum number of iterations for rendering.
 
     Returns:
-        dict: The dictionary with rendered template strings.
+        The dictionary with rendered template strings.
     """
     env = jinja2.Environment()
     if filters_directory:
         filters = load_functions_from_directory(filters_directory)
-        env.filters.update(filters)  # Add custom filters
+        env.filters.update(filters)
     if tests_directory:
         tests = load_functions_from_directory(tests_directory)
         env.tests.update(tests)
@@ -104,24 +105,3 @@ def render_templates_with_filters(
             break
         rendered_dict = new_dict
     return rendered_dict
-
-
-def main():
-    """main function to test this module"""
-    inp = {
-        "c": "from {{ b }}",
-        "a": "val_a",
-        "b": "from_{{ a | uppercase }}",
-        "d": {"e": "{{a}}"},
-    }
-    # inp = {"name": "test", "version": "0.0.2", "debug": "false", "age": 14}
-    logger.debug(f"imput = {inp}")
-    filters_path = Path(__file__).parent / "filters"
-    logger.debug(f"filters_path = {filters_path}")
-    # Path(__file__).parent / "tests"
-    rendered = render_templates_with_filters(inp, str(filters_path))
-    logger.info(f"rendered = {rendered}")
-
-
-if __name__ == "__main__":
-    main()

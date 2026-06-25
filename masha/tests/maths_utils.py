@@ -3,27 +3,27 @@ This module provides utility functions for basic mathematical operations.
 """
 
 
-def is_even(number):
+def is_even(number: int) -> bool:
     """
     Check if a given number is even.
 
     Args:
-        number (int): The number to check.
+        number: The number to check.
 
     Returns:
-        bool: True if the number is even, False otherwise.
+        True if the number is even, False otherwise.
     """
     return number % 2 == 0
 
 
-def test_is_even(number):
+def test_is_even(number: int) -> bool:
     """
-    Check if a given number is even for yasha.
+    Check if a given number is even.
 
     Args:
-        number (int): The number to check for evne.
+        number: The number to check.
 
     Returns:
-        bool: True if the number is even , False otherwise.
+        True if the number is even, False otherwise.
     """
     return number % 2 == 0

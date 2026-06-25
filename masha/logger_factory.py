@@ -1,10 +1,9 @@
 """
 Module for creating and configuring logger instances.
 
-This module provides a function to create a logger instance configured from a
-logging configuration file. The logger is set up using the settings specified
-in 'logging.conf'. If the configuration file is not found, a FileNotFoundError
-is raised.
+This module provides a function to create a logger instance. It attempts to
+load settings from 'logging.conf', falling back to a sensible default
+configuration if the file is not found.
 """
 
 import logging
@@ -12,27 +11,40 @@ import logging.config
 from pathlib import Path
 
 
-def create_logger(name):
+_DEFAULT_FORMAT = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+_DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+def create_logger(name: str, verbose: bool = False) -> logging.Logger:
     """
-    Creates and returns a logger instance configured from a logging configuration file.
+    Creates and returns a logger instance.
+
+    Attempts to load configuration from 'logging.conf'. If the file is not
+    found, falls back to a basic configuration with the standard format.
 
     Args:
-        name (str): The name of the logger to be created.
+        name: The name of the logger to be created.
+        verbose: If True, sets the log level to DEBUG; otherwise INFO.
 
     Returns:
-        logging.Logger: A logger instance configured according to the settings
-        in 'logging.conf'.
-
-    Raises:
-        FileNotFoundError: If the 'logging.conf' file is not found in the same
-        directory as this script.
+        A configured logging.Logger instance.
     """
     log_conf_file = Path(__file__).parent / "logging.conf"
 
-    if not log_conf_file.exists():
-        raise FileNotFoundError(
-            f"The logging configuration file '{log_conf_file}' was not found."
+    try:
+        logging.config.fileConfig(log_conf_file)
+    except FileNotFoundError:
+        # Fallback to basic configuration
+        logging.basicConfig(
+            level=logging.DEBUG if verbose else logging.INFO,
+            format=_DEFAULT_FORMAT,
+            datefmt=_DEFAULT_DATE_FORMAT,
         )
 
-    logging.config.fileConfig(log_conf_file)
-    return logging.getLogger(name)
+    logger = logging.getLogger(name)
+
+    # Override level based on verbose flag if using fallback config
+    if not log_conf_file.exists():
+        logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+
+    return logger
