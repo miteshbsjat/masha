@@ -1,6 +1,8 @@
 from pathlib import Path
+from types import MappingProxyType
 
 import pytest
+from pydantic import ValidationError
 
 from masha.config_loader import load_and_merge_configs
 from masha.config_validator import load_model_class, validate_config
@@ -55,3 +57,49 @@ class TestConfigValidator:
         bad.write_text("raise RuntimeError('boom')\n", encoding="utf-8")
         with pytest.raises(ModelValidationError, match="boom"):
             load_model_class(bad, "Anything")
+
+    def test_returns_model_instance(self):
+        model_class = load_model_class(model_file, "ConfigModel")
+        config = {"name": "a", "version": "1", "debug": "true", "age": 3}
+        instance = validate_config(config, model_class)
+        assert isinstance(instance, model_class)
+        assert instance.debug is True  # pydantic coercion applied
+
+    def test_accepts_read_only_mapping(self):
+        model_class = load_model_class(model_file, "ConfigModel")
+        config = MappingProxyType(
+            {"name": "a", "version": "1", "debug": False, "age": 3}
+        )
+        assert validate_config(config, model_class).age == 3
+
+    def test_missing_field_reported(self):
+        model_class = load_model_class(model_file, "ConfigModel")
+        with pytest.raises(ModelValidationError, match="age") as info:
+            validate_config(
+                {"name": "a", "version": "1", "debug": False}, model_class
+            )
+        assert isinstance(info.value.__cause__, ValidationError)
+
+    def test_non_python_model_file_raises(self, tmp_path):
+        path = tmp_path / "model.txt"
+        path.write_text("class X: pass\n", encoding="utf-8")
+        with pytest.raises(ModelValidationError, match="Cannot load model"):
+            load_model_class(path, "X")
+
+    def test_plain_class_rejected(self, tmp_path):
+        path = tmp_path / "plain.py"
+        path.write_text("class Plain:\n    pass\n", encoding="utf-8")
+        with pytest.raises(ModelValidationError, match="not a subclass"):
+            load_model_class(path, "Plain")
+
+    def test_model_with_forward_reference(self, tmp_path):
+        path = tmp_path / "fwd.py"
+        path.write_text(
+            "from __future__ import annotations\n"
+            "from pydantic import BaseModel\n"
+            "class Child(BaseModel):\n    v: int\n"
+            "class Parent(BaseModel):\n    child: Child\n",
+            encoding="utf-8",
+        )
+        parent = load_model_class(path, "Parent")
+        assert validate_config({"child": {"v": 1}}, parent).child.v == 1

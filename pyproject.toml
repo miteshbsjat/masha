@@ -67,5 +67,14 @@ files = ["masha"]
 testpaths = ["test"]
 addopts = "-ra --strict-markers"
 
+[tool.coverage.run]
+branch = true
+source = ["masha"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 95
+exclude_also = ['if __name__ == "__main__":']
+
 [tool.bandit]
 exclude_dirs = ["test"]

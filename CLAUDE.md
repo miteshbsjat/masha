@@ -135,6 +135,9 @@ def main(verbose: bool) -> None:
   - Use `tmp_path` for generated files and `monkeypatch.setenv/delenv` for environment variables — never mutate `os.environ` directly.
   - Test the CLI with `click.testing.CliRunner`, asserting exit codes and that `"Traceback"` never appears in output.
   - Every security control in §6 has a regression test; keep it that way when changing related code.
+  - Coverage is measured with branches and must stay ≥ 95% (`fail_under` in `pyproject.toml`; currently 100%). New code ships with tests for both the happy path and every `raise`.
+  - `test/conftest.py` resets the `masha` logger after each test (the CLI disables propagation and binds a handler to `CliRunner`'s stderr). Use `caplog.at_level(..., logger="masha")` to assert on log output — e.g. that secrets are never logged.
+  - Test one file per module (`test/test_<module>.py`). Don't import a name starting with `test_` from `masha/tests/` directly; pytest would collect it as a test. Import the module instead.
 
 ---
 
