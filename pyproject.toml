@@ -8,28 +8,24 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.13"
-pyyaml = "6.0.2"
-toml = "0.10.2"
-result = "^0.17.0"
+pyyaml = "^6.0.2"
 pydantic = "^2.10.6"
-Jinja2 = "^3.1.5"
-returns = "^0.24.0"
+Jinja2 = "^3.1.6"
 click = "^8.1.8"
-pytest = "^9.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
-autoflake = "^2.3.1"
-black = "^25.1.0"
-pylint = "^3.3.4"
+black = "^26.10.1"
 ruff = "^0.9.5"
 build = "^1.2.2.post1"
 twine = "^6.1.0"
-mypy = "^0.990"
-wheel = "^0.38.3"
 isort = "^6.0.0"
-flake8 = "^7.1.1"
-setuptools = "^65.5.1"
+pytest = "^9.1.1"
+pytest-cov = "^7.1.0"
+mypy = "^2.4.0"
+types-pyyaml = "^6.0.12.20260906"
+bandit = "^1.9.4"
+pip-audit = "^2.10.1"
 
 [tool.poetry.scripts]
 masha = "masha.cli:main"
@@ -42,8 +38,34 @@ build-backend = "poetry.core.masonry.api"
 line-length = 79
 
 [tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
+profile = "black"
 line_length = 79
+
+[tool.ruff]
+line-length = 79
+target-version = "py313"
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, I isort, B bugbear, UP pyupgrade,
+# S bandit (security), SIM simplify, BLE blind-except, LOG/G logging rules.
+select = ["E", "W", "F", "I", "B", "UP", "S", "SIM", "BLE", "LOG", "G"]
+ignore = [
+    "E501", # line length is enforced by black
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test/**" = ["S101"]  # assert is how pytest works
+"masha/cli.py" = ["BLE001"]  # top-level last-resort error boundary
+"masha/module_loader.py" = ["BLE001"]  # wraps arbitrary user-code errors
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["masha"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+addopts = "-ra --strict-markers"
+
+[tool.bandit]
+exclude_dirs = ["test"]

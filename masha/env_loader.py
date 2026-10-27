@@ -7,11 +7,28 @@ import os
 import re
 from typing import Any
 
-from masha.logger_factory import create_logger
+logger = logging.getLogger(__name__)
 
-logger = create_logger("masha")
+_ENV_PATTERN = re.compile(r"\$\{(\w+):\s*(.*?)\}")
 
-_env_pattern = re.compile(r"\$\{(\w+):\s*(.*?)\}")
+
+def _resolve_value(value: Any) -> Any:
+    if isinstance(value, str):
+        match = _ENV_PATTERN.fullmatch(value)
+        if match:
+            env_var, default_value = match.groups()
+            if env_var in os.environ:
+                # Never log the value itself: it may be a secret.
+                logger.debug("Resolved env variable %s", env_var)
+                return os.environ[env_var]
+            logger.debug("Env variable %s not set, using default", env_var)
+            return None if default_value == "null" else default_value
+        return value
+    if isinstance(value, dict):
+        return {k: _resolve_value(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_resolve_value(v) for v in value]
+    return value
 
 
 def resolve_env_variables(config: Any) -> Any:
@@ -20,29 +37,15 @@ def resolve_env_variables(config: Any) -> Any:
 
     Searches for environment variable placeholders in the given configuration.
     Placeholders use the format ${ENV_VAR:default_value}, where ENV_VAR is
-    the environment variable name and default_value is optional.
+    the environment variable name and default_value is optional. A default of
+    ``null`` resolves to ``None``.
 
     Args:
         config: The configuration dictionary (or nested structure) containing
-                potential environment variable placeholders.
+                potential environment variable placeholders. It is not
+                mutated.
 
     Returns:
         A new structure with all environment variable placeholders resolved.
     """
-    def resolve_value(value):
-        if isinstance(value, str):
-            match = _env_pattern.fullmatch(value)
-            if match:
-                env_var, default_value = match.groups()
-                if default_value == "null":
-                    default_value = None
-                return os.getenv(env_var, default_value)
-        elif isinstance(value, dict):
-            return {k: resolve_value(v) for k, v in value.items()}
-        elif isinstance(value, list):
-            return [resolve_value(v) for v in value]
-        return value
-
-    if isinstance(config, dict):
-        return {key: resolve_value(value) for key, value in config.items()}
-    return config
+    return _resolve_value(config)

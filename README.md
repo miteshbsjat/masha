@@ -14,14 +14,14 @@ MASHup of Configuration Loading from several file types and run [yAsha](https://
   <tr>
   <td><img src="docs/images/masha.jpg" width="135" height="100"></td>
 <td>MASHA (name) is inspired from Cartoon Series <a href="https://en.wikipedia.org/wiki/Masha_and_the_Bear">Masha and Bear</a>. Like in this cartoon, a girl named `Masha` plays with the bear name `Mishka`, similarly, my daughter named `Diyanjali` plays with her father named `Mitesh` (i.e. me). :) <br />
-The Masha logo is combination of Masha (the girl) and Yasha (the Katana Sword). 
+The Masha logo is combination of Masha (the girl) and Yasha (the Katana Sword).
 </td>
   </tr>
 </table>
 
 ## Installation
 
-You can install `masha` via pip. Ensure you have Python 3.10 or later installed on your system:
+You can install `masha` via pip. Ensure you have Python 3.13 or later installed on your system:
 
 ```sh
 pip install masha
@@ -49,20 +49,28 @@ Alternatively, if you prefer to install from the source code (requires `poetry`)
 
 ## Best Practices Implemented
 
-This project follows strict Python best practices as documented in [CLAUDE.md](CLAUDE.md):
+This project follows the Python and security practices documented in [CLAUDE.md](CLAUDE.md):
 
-- **Logging**: All runtime output uses the standard `logging` module with lazy interpolation (`%s`) for performance. No `print()` calls are used.
-- **Error Handling**: Custom exception hierarchy (`MashaBaseError`, `ConfigLoadError`, `ModelValidationError`, `TemplateRenderError`) with graceful CLI error handling.
-- **Type Hints**: All functions have strict type annotations for parameters and return types.
-- **Graceful Failures**: Users never see raw tracebacks; errors are logged internally and clean messages are shown via Click's output streams.
-- **Verbose Mode**: Use the `--verbose` / `-V` flag to enable DEBUG-level logging for troubleshooting.
+- **Logging**: Library modules use `logging.getLogger(__name__)`; only the CLI configures handlers, and logs go to `stderr`. Lazy `%s` interpolation throughout, no `print()`.
+- **Error Handling**: Internal functions raise a custom exception hierarchy (`MashaBaseError` → `ConfigLoadError`, `ModelValidationError`, `TemplateRenderError`, `PluginLoadError`); the CLI turns them into a clean one-line error and exit code `1`.
+- **Graceful Failures**: Users never see raw tracebacks; run with `--verbose` / `-V` to get DEBUG logs and tracebacks.
+- **Type Hints**: Fully annotated, checked with `mypy --strict`.
+- **Security**:
+  - YAML is parsed with `yaml.safe_load` (no arbitrary object construction).
+  - All Jinja2 rendering runs in a sandbox that *raises* on access to Python internals, blocking template injection through config values.
+  - Autoescaping is enabled for `.html`/`.xml` templates only; code-generation outputs are emitted verbatim.
+  - Resolved config values (which may contain secrets from env vars) are never logged — only keys, at DEBUG.
+  - Rendering completes in memory before the output file is opened, so failures never leave truncated files.
+  - Dependencies are scanned with `pip-audit`, code with `bandit` / ruff's `S` rules.
 
-## Testing
+> **Note:** `--model-file`, `--template-filters-directory` and `--template-tests-directory` *import and execute* the given Python files. Only point them at code you trust.
 
-Run the full test suite with:
+## Development
 
 ```bash
-poetry run python -m pytest test/ -v
+poetry install
+make format     # isort + black + ruff --fix
+make check      # lint, mypy, bandit, pip-audit, pytest with coverage
 ```
 
 ## Usage
@@ -76,6 +84,7 @@ Usage: masha [OPTIONS] INPUT_FILE
   template.
 
 Options:
+  --version                       Show the version and exit.
   -v, --variables FILE            Path(s) to the various configuration files.
                                   [required]
   -m, --model-file FILE           Path to the Python file containing the
@@ -90,8 +99,9 @@ Options:
                                   functions.
   -o, --output FILE               Path to the output file where the rendered
                                   content will be written.  [required]
-    -V, --verbose                  Enable debug logging.
-    --help                          Show this message and exit.
+  -V, --verbose                   Enable debug logging (shows tracebacks on
+                                  failure).
+  --help                          Show this message and exit.
 ```
 
 ### Sample Usage

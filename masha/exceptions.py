@@ -20,3 +20,7 @@ class ModelValidationError(MashaBaseError):
 
 class TemplateRenderError(MashaBaseError):
     """Exception raised when a Jinja2 template cannot be rendered."""
+
+
+class PluginLoadError(MashaBaseError):
+    """Exception raised when custom Jinja2 filters or tests cannot be loaded."""

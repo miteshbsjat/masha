@@ -1,30 +1,40 @@
-import os
-import sys
 from pathlib import Path
 
-import pytest
 import yaml
-from returns.result import Success
 
-# directory reach
-directory = Path(__file__).parent.parent / "masha"
-sys.path.append(str(directory))
-from config_loader import load_and_merge_configs
-from env_loader import resolve_env_variables
+from masha.config_loader import load_and_merge_configs
+from masha.env_loader import resolve_env_variables
 
 test_dir = Path(__file__).parent
 
 
 class TestEnvLoader:
-    def test_happy_path(self):
-        config_paths = test_dir / "env_config.yaml"
-        with open(config_paths, "r") as f:
+    def test_happy_path(self, monkeypatch):
+        config_path = test_dir / "env_config.yaml"
+        with open(config_path, encoding="utf-8") as f:
             expected_dict = yaml.safe_load(f)
 
-        result = load_and_merge_configs([config_paths])
-        assert isinstance(result, Success)
-        assert result.unwrap() == expected_dict
+        config = load_and_merge_configs([config_path])
+        assert config == expected_dict
 
-        os.environ["ENV_B"] = "default_not_used_b"
-        env_config = resolve_env_variables(result.unwrap())
-        assert env_config["a"]["b"] == os.environ["ENV_B"]
+        monkeypatch.setenv("ENV_B", "default_not_used_b")
+        monkeypatch.delenv("ENV_C", raising=False)
+        monkeypatch.delenv("ENV_D", raising=False)
+        env_config = resolve_env_variables(config)
+        assert env_config["a"] == {
+            "b": "default_not_used_b",
+            "c": "default_used_c",
+            "d": None,
+        }
+
+    def test_input_not_mutated(self, monkeypatch):
+        monkeypatch.setenv("ENV_X", "x")
+        config = {"a": {"b": "${ENV_X:y}"}}
+        resolve_env_variables(config)
+        assert config == {"a": {"b": "${ENV_X:y}"}}
+
+    def test_lists_resolved(self, monkeypatch):
+        monkeypatch.setenv("ENV_X", "x")
+        assert resolve_env_variables({"a": ["${ENV_X:y}", 1]}) == {
+            "a": ["x", 1]
+        }

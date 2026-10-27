@@ -3,70 +3,86 @@ Validate the configuration against a Pydantic model class.
 """
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Optional, Type
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
-from returns.result import Failure, Result, Success
 
 from masha.exceptions import ModelValidationError
-from masha.logger_factory import create_logger
+from masha.module_loader import import_module_from_path
 
-logger = create_logger("masha")
+logger = logging.getLogger(__name__)
 
 
 def validate_config(
-    config_data: dict, model_class: Type[BaseModel]
-) -> Result[str, str]:
+    config_data: Mapping[str, Any], model_class: type[BaseModel]
+) -> BaseModel:
     """
     Validate the configuration data against the provided Pydantic model class.
 
     Args:
-        config_data: A dictionary containing the configuration data to validate.
+        config_data: The configuration data to validate.
         model_class: The Pydantic model class defining the expected structure.
 
     Returns:
-        Success(str) with a validation message if valid.
-        Failure(str) with error details if invalid.
+        The validated model instance.
+
+    Raises:
+        ModelValidationError: If the configuration does not match the model.
     """
     try:
-        model_instance = model_class(**config_data)
-        msg = f"Validation successful: {model_instance}"
-        logger.debug(msg)
-        return Success(msg)
+        model_instance = model_class.model_validate(dict(config_data))
     except ValidationError as e:
-        msg = f"Validation failed with errors: {e}"
-        logger.warning(msg)
-        return Failure(msg)
+        logger.warning(
+            "Validation against %s failed with %d error(s)",
+            model_class.__name__,
+            e.error_count(),
+        )
+        raise ModelValidationError(
+            f"Configuration is invalid for {model_class.__name__}: {e}"
+        ) from e
+    logger.debug("Validation against %s successful", model_class.__name__)
+    return model_instance
 
 
 def load_model_class(
     model_file_path: Path, model_class_name: str
-) -> Optional[Type[BaseModel]]:
+) -> type[BaseModel]:
     """
-    Load a model class from a specified file path.
+    Load a Pydantic model class from a Python file.
+
+    SECURITY: the model file is imported, which executes its code. Only load
+    model files from trusted locations.
 
     Args:
         model_file_path: The path to the file containing the model class.
         model_class_name: The name of the model class to load.
 
     Returns:
-        The loaded model class if successful, None otherwise.
+        The loaded model class.
+
+    Raises:
+        ModelValidationError: If the file cannot be imported, the class is
+            missing, or it is not a subclass of ``pydantic.BaseModel``.
     """
     try:
-        model_globals = {}
-        exec(model_file_path.read_text(), model_globals)
-        model_class = model_globals[model_class_name]
-        if not issubclass(model_class, BaseModel):
-            raise TypeError(
-                f"{model_class_name} is not a subclass of Pydantic BaseModel."
-            )
-        return model_class
-    except (FileNotFoundError, ImportError) as e:
-        logger.warning("Failed to load the model class: %s", e)
-        return None
-    except TypeError:
-        raise
-    except Exception as e:
-        logger.warning("Failed to load the model class: %s", e)
-        return None
+        module = import_module_from_path(Path(model_file_path))
+    except ImportError as e:
+        logger.error("Failed to import model file %s", model_file_path)
+        raise ModelValidationError(
+            f"Cannot load model file {model_file_path}: {e}"
+        ) from e
+
+    model_class = getattr(module, model_class_name, None)
+    if model_class is None:
+        raise ModelValidationError(
+            f"Class {model_class_name!r} not found in {model_file_path}"
+        )
+    if not (
+        isinstance(model_class, type) and issubclass(model_class, BaseModel)
+    ):
+        raise ModelValidationError(
+            f"{model_class_name} is not a subclass of pydantic.BaseModel"
+        )
+    return model_class
